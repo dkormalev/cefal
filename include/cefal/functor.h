@@ -43,7 +43,7 @@ template <typename F>
 concept Functor =
 requires(F f, detail::InnerType_T<F> value, std::function<detail::InnerType_T<F>(detail::InnerType_T<F>)> converter) {
     { instances::Functor<F>::unit(std::move(value)) } -> std::same_as<F>;
-    { instances::Functor<F>::map(f, converter) } -> std::same_as<F>;
+    { instances::Functor<F>::map(f, std::move(converter)) } -> std::same_as<F>;
 };
 // clang-format on
 } // namespace concepts

@@ -7,6 +7,23 @@
 
 using namespace cefal;
 
+template <typename T>
+struct ImplementedMethods {
+    T value;
+    static ImplementedMethods unit(T x) { return {x}; }
+
+    template <typename Func>
+    auto map(Func f) const {
+        return ImplementedMethods{f(value)};
+    };
+
+    template <typename Func>
+    auto flatMap(Func f) const {
+        return ImplementedMethods{f(value).value};
+    };
+};
+
+
 template <concepts::Monad M>
 int testContainers(const M& m) {
     return *(m | ops::flatMap([](auto) { return std::vector<double>{4.5, 5.5}; })
@@ -43,5 +60,9 @@ int main() {
     { ContainerTester<std::set<double>> x; }
     { ContainerTester<std::unordered_set<int>> x; }
     { ContainerTester<std::unordered_set<double>> x; }
-    // { Tester<std::map<int, int>> x; } // should fail
+
+    ImplementedMethods<int> impl =
+        ops::unit<ImplementedMethods>(42) | ops::map([](int x) {return x + 2;})
+                                          | ops::flatMap([](int x) {return ImplementedMethods<int>{x * 3};});
+    std::cout << impl.value << std::endl;
 }

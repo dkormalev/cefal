@@ -29,8 +29,8 @@
 #include "cefal/detail/type_traits.h"
 #include "cefal/monad.h"
 
-#include <type_traits>
 #include <algorithm>
+#include <type_traits>
 
 namespace cefal::instances {
 template <detail::StdContainer Src>

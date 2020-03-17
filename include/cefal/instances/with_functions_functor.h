@@ -25,7 +25,6 @@
 
 #pragma once
 
-#include "cefal/detail/std_concepts.h"
 #include "cefal/detail/type_traits.h"
 #include "cefal/functor.h"
 
@@ -33,30 +32,27 @@
 #include <type_traits>
 
 namespace cefal::instances {
-template <detail::StdContainer Src>
-struct Functor<Src> {
-private:
-    using T = detail::InnerType_T<Src>;
+namespace detail {
+// clang-format off
+template <typename T>
+concept HasFunctorMethods = requires(T t, cefal::detail::InnerType_T<T> value,
+                                     std::function<cefal::detail::InnerType_T<T>(cefal::detail::InnerType_T<T>)> f) {
+    { T::unit(std::move(value)) } -> std::same_as<T>;
+    { t.map(std::move(f)) } -> std::same_as<T>;
+};
+// clang-format on
+} // namespace detail
 
-public:
-    static Src unit(const T& x) { return Src{x}; }
-    static Src unit(T&& x) { return Src{std::move(x)}; }
-
-    template <typename Func>
-    static auto map(const Src& src, Func&& func) requires detail::VectorLikeContainer<Src> {
-        using Dest = detail::WithInnerType_T<Src, std::invoke_result_t<Func, T>>;
-        Dest result;
-        result.reserve(src.size());
-        std::transform(src.begin(), src.end(), std::back_inserter(result), [&func](auto&& x) { return func(x); });
-        return result;
+template <detail::HasFunctorMethods T>
+struct Functor<T> {
+    template <typename Inner>
+    static T unit(Inner&& x) {
+        return T::unit(std::forward<Inner>(x));
     }
 
     template <typename Func>
-    static auto map(const Src& src, Func&& func) requires detail::SetLikeContainer<Src> {
-        using Dest = detail::WithInnerType_T<Src, std::invoke_result_t<Func, T>>;
-        Dest result;
-        std::transform(src.begin(), src.end(), std::inserter(result, result.end()), [&func](auto&& x) { return func(x); });
-        return result;
+    static auto map(const T& src, Func&& func) {
+        return src.map(std::forward<Func>(func));
     }
 };
 } // namespace cefal::instances

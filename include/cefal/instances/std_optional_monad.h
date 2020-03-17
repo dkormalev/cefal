@@ -28,9 +28,9 @@
 #include "cefal/detail/type_traits.h"
 #include "cefal/monad.h"
 
-#include <type_traits>
 #include <algorithm>
 #include <optional>
+#include <type_traits>
 
 namespace cefal::instances {
 template <typename T>

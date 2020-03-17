@@ -49,6 +49,8 @@ IncludeCategories:
       Priority: 10
     - Regex: '^<.*' # stl/system headers
       Priority: 20
+    - Regex: 'cefal/instances/.*' # Cefal instances
+      Priority: 2
     - Regex: '.*' # everything else
       Priority: 1
 IncludeIsMainRegex: '$'

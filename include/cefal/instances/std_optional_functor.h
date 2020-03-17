@@ -27,9 +27,9 @@
 
 #include "cefal/functor.h"
 
-#include <type_traits>
 #include <algorithm>
 #include <optional>
+#include <type_traits>
 
 namespace cefal::instances {
 template <typename T>

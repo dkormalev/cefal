@@ -43,7 +43,7 @@ namespace concepts {
 template <typename M>
 concept Monad =
 Functor<M> && requires (M m, std::function<M(detail::InnerType_T<M>)> converter) {
-  {instances::Monad<M>::flatMap(m, converter)} -> std::same_as<M>;
+  {instances::Monad<M>::flatMap(m, std::move(converter))} -> std::same_as<M>;
 };
 // clang-format on
 } // namespace concepts

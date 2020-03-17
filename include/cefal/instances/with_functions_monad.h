@@ -25,38 +25,29 @@
 
 #pragma once
 
-#include "cefal/detail/std_concepts.h"
 #include "cefal/detail/type_traits.h"
-#include "cefal/functor.h"
+#include "cefal/monad.h"
 
 #include <algorithm>
 #include <type_traits>
 
 namespace cefal::instances {
-template <detail::StdContainer Src>
-struct Functor<Src> {
-private:
-    using T = detail::InnerType_T<Src>;
+namespace detail {
+// clang-format off
+template <typename T>
+concept HasMonadMethods = requires(T t, std::function<T(cefal::detail::InnerType_T<T>)> f) {
+    { t.flatMap(std::move(f)) } -> std::same_as<T>;
+};
+// clang-format on
+} // namespace detail
 
-public:
-    static Src unit(const T& x) { return Src{x}; }
-    static Src unit(T&& x) { return Src{std::move(x)}; }
-
-    template <typename Func>
-    static auto map(const Src& src, Func&& func) requires detail::VectorLikeContainer<Src> {
-        using Dest = detail::WithInnerType_T<Src, std::invoke_result_t<Func, T>>;
-        Dest result;
-        result.reserve(src.size());
-        std::transform(src.begin(), src.end(), std::back_inserter(result), [&func](auto&& x) { return func(x); });
-        return result;
-    }
-
-    template <typename Func>
-    static auto map(const Src& src, Func&& func) requires detail::SetLikeContainer<Src> {
-        using Dest = detail::WithInnerType_T<Src, std::invoke_result_t<Func, T>>;
-        Dest result;
-        std::transform(src.begin(), src.end(), std::inserter(result, result.end()), [&func](auto&& x) { return func(x); });
-        return result;
+template <detail::HasMonadMethods T>
+struct Monad<T> {
+    template <typename Func, typename Result = std::invoke_result_t<Func, cefal::detail::InnerType_T<T>>>
+    static Result flatMap(const T& src, Func&& func) {
+        static_assert(std::is_same_v<Result, cefal::detail::WithInnerType_T<T, cefal::detail::InnerType_T<Result>>>,
+                      "Result should be same type as T");
+        return src.flatMap(std::forward<Func>(func));
     }
 };
 } // namespace cefal::instances
