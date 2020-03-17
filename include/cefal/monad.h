@@ -40,10 +40,10 @@ struct Monad;
 
 namespace concepts {
 // clang-format off
-template <typename M>
+template <typename M, typename InnerT = detail::InnerType_T<std::remove_cvref_t<M>>, typename CleanM = std::remove_cvref_t<M>>
 concept Monad =
-Functor<M> && requires (M m, std::function<M(detail::InnerType_T<M>)> converter) {
-  {instances::Monad<M>::flatMap(m, std::move(converter))} -> std::same_as<M>;
+Functor<CleanM, InnerT> && requires (CleanM m, std::function<CleanM(InnerT)> converter) {
+  {instances::Monad<CleanM>::flatMap(m, std::move(converter))} -> std::same_as<CleanM>;
 };
 // clang-format on
 } // namespace concepts
@@ -55,8 +55,8 @@ struct flatMap {
     flatMap(Func&& func) : func(std::move(func)) {}
     flatMap(const Func& func) : func(func) {}
     template <concepts::Monad M>
-    inline auto operator()(const M& m) && {
-        return instances::Monad<M>::flatMap(m, std::move(func));
+    inline auto operator()(M&& m) && {
+        return instances::Monad<std::remove_cvref_t<M>>::flatMap(std::forward<M>(m), std::move(func));
     }
 
 private:
@@ -64,8 +64,8 @@ private:
 };
 
 template <typename Left, typename Func>
-inline auto operator|(const Left& left, flatMap<Func>&& op) {
-    return std::move(op)(left);
+inline auto operator|(Left&& left, flatMap<Func>&& op) {
+    return std::move(op)(std::forward<Left>(left));
 }
 } // namespace ops
 } // namespace cefal

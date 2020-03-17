@@ -43,5 +43,12 @@ struct Functor<std::optional<T>> {
             return func(*src);
         return std::nullopt;
     }
+
+    template <typename Func, typename Result = std::optional<std::invoke_result_t<Func, T>>>
+    static Result map(std::optional<T>&& src, Func&& func) {
+        if (src)
+            return func(*std::move(src));
+        return std::nullopt;
+    }
 };
 } // namespace cefal::instances

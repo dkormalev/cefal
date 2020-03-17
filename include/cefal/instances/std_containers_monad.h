@@ -52,11 +52,39 @@ public:
     }
 
     template <typename Func, detail::SingleSocketedStdContainer RawResult = std::invoke_result_t<Func, T>>
+    static auto flatMap(Src&& src, Func&& func) requires detail::VectorLikeContainer<Src> {
+        using Result = detail::WithInnerType_T<Src, detail::InnerType_T<RawResult>>;
+        Result result;
+        for (auto&& t : src) {
+            RawResult mapped = func(std::move(t));
+            for (auto&& x : mapped)
+                result.push_back(std::move(x));
+        }
+        return result;
+    }
+
+    template <typename Func, detail::SingleSocketedStdContainer RawResult = std::invoke_result_t<Func, T>>
     static auto flatMap(const Src& src, Func&& func) requires detail::SetLikeContainer<Src> {
         using Result = detail::WithInnerType_T<Src, detail::InnerType_T<RawResult>>;
         Result result;
         for (auto&& t : src) {
             RawResult mapped = func(t);
+            if constexpr (std::is_same_v<Result, RawResult>) {
+                result.merge(std::move(mapped));
+            } else {
+                for (auto&& x : mapped)
+                    result.insert(std::move(x));
+            }
+        }
+        return result;
+    }
+
+    template <typename Func, detail::SingleSocketedStdContainer RawResult = std::invoke_result_t<Func, T>>
+    static auto flatMap(Src&& src, Func&& func) requires detail::SetLikeContainer<Src> {
+        using Result = detail::WithInnerType_T<Src, detail::InnerType_T<RawResult>>;
+        Result result;
+        for (auto&& t : src) {
+            RawResult mapped = func(std::move(t));
             if constexpr (std::is_same_v<Result, RawResult>) {
                 result.merge(std::move(mapped));
             } else {

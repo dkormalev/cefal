@@ -32,10 +32,6 @@ template <template <typename...> typename C, typename T, typename... Ts>
 struct InnerType<C<T, Ts...>> {
     using type = T;
 };
-template <template <typename...> typename C, typename T, typename... Ts>
-struct InnerType<C<T, Ts...>&> {
-    using type = T;
-};
 template <typename T>
 using InnerType_T = InnerType<T>::type;
 
@@ -43,10 +39,6 @@ template <typename...>
 struct WithInnerType;
 template <template <typename...> typename C, typename T, typename... Ts, typename NewT>
 struct WithInnerType<C<T, Ts...>, NewT> {
-    using type = C<NewT>;
-};
-template <template <typename...> typename C, typename T, typename... Ts, typename NewT>
-struct WithInnerType<C<T, Ts...>&, NewT> {
     using type = C<NewT>;
 };
 template <typename... Ts>

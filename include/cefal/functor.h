@@ -39,11 +39,11 @@ struct Functor;
 
 namespace concepts {
 // clang-format off
-template <typename F>
+template <typename F, typename InnerT = detail::InnerType_T<std::remove_cvref_t<F>>, typename CleanF = std::remove_cvref_t<F>>
 concept Functor =
-requires(F f, detail::InnerType_T<F> value, std::function<detail::InnerType_T<F>(detail::InnerType_T<F>)> converter) {
-    { instances::Functor<F>::unit(std::move(value)) } -> std::same_as<F>;
-    { instances::Functor<F>::map(f, std::move(converter)) } -> std::same_as<F>;
+requires(CleanF f, InnerT value, std::function<InnerT(InnerT)> converter) {
+    { instances::Functor<CleanF>::unit(std::move(value)) } -> std::same_as<CleanF>;
+    { instances::Functor<CleanF>::map(f, std::move(converter)) } -> std::same_as<CleanF>;
 };
 // clang-format on
 } // namespace concepts
@@ -65,8 +65,8 @@ struct map {
     map(Func&& func) : func(std::move(func)) {}
     map(const Func& func) : func(func) {}
     template <concepts::Functor F>
-    inline auto operator()(const F& f) && {
-        return instances::Functor<F>::map(f, std::move(func));
+    inline auto operator()(F&& f) && {
+        return instances::Functor<std::remove_cvref_t<F>>::map(std::forward<F>(f), std::move(func));
     }
 
 private:
@@ -74,8 +74,8 @@ private:
 };
 
 template <typename Left, typename Func>
-inline auto operator|(const Left& left, map<Func>&& op) {
-    return std::move(op)(left);
+inline auto operator|(Left&& left, map<Func>&& op) {
+    return std::move(op)(std::forward<Left>(left));
 }
 } // namespace ops
 } // namespace cefal

@@ -49,5 +49,12 @@ struct Monad<T> {
                       "Result should be same type as T");
         return src.flatMap(std::forward<Func>(func));
     }
+
+    template <typename Func, typename Result = std::invoke_result_t<Func, cefal::detail::InnerType_T<T>>>
+    static Result flatMap(T&& src, Func&& func) {
+        static_assert(std::is_same_v<Result, cefal::detail::WithInnerType_T<T, cefal::detail::InnerType_T<Result>>>,
+                      "Result should be same type as T");
+        return std::move(src).flatMap(std::forward<Func>(func));
+    }
 };
 } // namespace cefal::instances

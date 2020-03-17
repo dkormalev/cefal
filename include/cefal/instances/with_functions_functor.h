@@ -54,5 +54,10 @@ struct Functor<T> {
     static auto map(const T& src, Func&& func) {
         return src.map(std::forward<Func>(func));
     }
+
+    template <typename Func>
+    static auto map(T&& src, Func&& func) {
+        return std::move(src).map(std::forward<Func>(func));
+    }
 };
 } // namespace cefal::instances

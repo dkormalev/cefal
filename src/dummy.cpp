@@ -25,11 +25,12 @@ struct ImplementedMethods {
 
 
 template <concepts::Monad M>
-int testContainers(const M& m) {
-    return *(m | ops::flatMap([](auto) { return std::vector<double>{4.5, 5.5}; })
-               | ops::flatMap([](auto) { return std::set<double>{4.5, 5.5}; })
-               | ops::map([](double x) { return int(x); }))
-                .begin();
+int testContainers(M&& m) {
+    return *(std::forward<M>(m) | ops::map([](int x) { return x + 5; })
+                                | ops::flatMap([](auto) { return std::vector<double>{4.5, 5.5}; })
+                                | ops::flatMap([](auto) { return std::set<double>{4.5, 5.5}; })
+                                | ops::map([](double x) { return int(x); }))
+                                 .begin();
 }
 
 double testOptional(const std::optional<int>& opt) {
@@ -48,6 +49,7 @@ struct ContainerTester {
     ContainerTester() {
         C a = ops::unit<C>(5);
         testContainers(a);
+        testContainers(std::move(a));
     }
 };
 
@@ -60,6 +62,7 @@ int main() {
     { ContainerTester<std::set<double>> x; }
     { ContainerTester<std::unordered_set<int>> x; }
     { ContainerTester<std::unordered_set<double>> x; }
+    std::vector<int> united = ops::unit<std::vector>(5);
 
     ImplementedMethods<int> impl =
         ops::unit<ImplementedMethods>(42) | ops::map([](int x) {return x + 2;})

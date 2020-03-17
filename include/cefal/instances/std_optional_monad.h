@@ -42,5 +42,13 @@ struct Monad<std::optional<T>> {
             return func(*src);
         return std::nullopt;
     }
+
+    template <typename Func, typename Result = std::invoke_result_t<Func, T>>
+    static Result flatMap(std::optional<T>&& src, Func&& func) {
+        static_assert(std::is_same_v<Result, std::optional<detail::InnerType_T<Result>>>, "Result should be std::optional");
+        if (src)
+            return func(*std::move(src));
+        return std::nullopt;
+    }
 };
 } // namespace cefal::instances
