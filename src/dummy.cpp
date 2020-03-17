@@ -23,6 +23,31 @@ struct ImplementedMethods {
     };
 };
 
+struct SimpleImplementedMethods {
+    int value;
+    static SimpleImplementedMethods unit(int x) { return {x}; }
+
+    template <typename Func>
+    auto map(Func f) const {
+        return SimpleImplementedMethods{f(value)};
+    };
+
+    template <typename Func>
+    auto flatMap(Func f) const {
+        return SimpleImplementedMethods{f(value).value};
+    };
+};
+
+namespace cefal {
+template <>
+struct InnerType<SimpleImplementedMethods> {
+    using type = int;
+};
+template <>
+struct WithInnerType<SimpleImplementedMethods, int> {
+    using type = SimpleImplementedMethods;
+};
+}
 
 template <concepts::Monad M>
 int testContainers(M&& m) {
@@ -68,4 +93,9 @@ int main() {
         ops::unit<ImplementedMethods>(42) | ops::map([](int x) {return x + 2;})
                                           | ops::flatMap([](int x) {return ImplementedMethods<int>{x * 3};});
     std::cout << impl.value << std::endl;
+
+    SimpleImplementedMethods nonTemplatedImpl =
+        ops::unit<SimpleImplementedMethods>(42) | ops::map([](int x) {return x + 2;})
+                                                | ops::flatMap([](int x) {return SimpleImplementedMethods{x * 3};});
+    std::cout << nonTemplatedImpl.value << std::endl;
 }

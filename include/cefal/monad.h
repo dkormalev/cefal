@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "cefal/detail/type_traits.h"
+#include "cefal/common.h"
 #include "cefal/functor.h"
 
 #include <concepts>
@@ -40,7 +40,7 @@ struct Monad;
 
 namespace concepts {
 // clang-format off
-template <typename M, typename InnerT = detail::InnerType_T<std::remove_cvref_t<M>>, typename CleanM = std::remove_cvref_t<M>>
+template <typename M, typename InnerT = InnerType_T<std::remove_cvref_t<M>>, typename CleanM = std::remove_cvref_t<M>>
 concept Monad =
 Functor<CleanM, InnerT> && requires (CleanM m, std::function<CleanM(InnerT)> converter) {
   {instances::Monad<CleanM>::flatMap(m, std::move(converter))} -> std::same_as<CleanM>;

@@ -25,7 +25,7 @@
 
 #pragma once
 
-namespace cefal::detail {
+namespace cefal {
 template <typename...>
 struct InnerType;
 template <template <typename...> typename C, typename T, typename... Ts>
@@ -43,4 +43,4 @@ struct WithInnerType<C<T, Ts...>, NewT> {
 };
 template <typename... Ts>
 using WithInnerType_T = WithInnerType<Ts...>::type;
-} // namespace cefal::detail
+} // namespace cefal

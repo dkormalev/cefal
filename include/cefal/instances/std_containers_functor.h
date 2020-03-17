@@ -25,8 +25,8 @@
 
 #pragma once
 
+#include "cefal/common.h"
 #include "cefal/detail/std_concepts.h"
-#include "cefal/detail/type_traits.h"
 #include "cefal/functor.h"
 
 #include <algorithm>
@@ -36,7 +36,7 @@ namespace cefal::instances {
 template <detail::StdContainer Src>
 struct Functor<Src> {
 private:
-    using T = detail::InnerType_T<Src>;
+    using T = InnerType_T<Src>;
 
 public:
     static Src unit(const T& x) { return Src{x}; }
@@ -44,7 +44,7 @@ public:
 
     template <typename Func>
     static auto map(const Src& src, Func&& func) requires detail::VectorLikeContainer<Src> {
-        using Dest = detail::WithInnerType_T<Src, std::invoke_result_t<Func, T>>;
+        using Dest = WithInnerType_T<Src, std::invoke_result_t<Func, T>>;
         Dest result;
         result.reserve(src.size());
         std::transform(src.begin(), src.end(), std::back_inserter(result), [&func](auto&& x) { return func(x); });
@@ -53,7 +53,7 @@ public:
 
     template <typename Func>
     static auto map(Src&& src, Func&& func) requires detail::VectorLikeContainer<Src> {
-        using Dest = detail::WithInnerType_T<Src, std::invoke_result_t<Func, T>>;
+        using Dest = WithInnerType_T<Src, std::invoke_result_t<Func, T>>;
         if constexpr (std::is_same_v<Src, Dest>) {
             std::transform(src.begin(), src.end(), src.begin(), [&func](auto&& x) { return func(std::move(x)); });
             return std::move(src);
@@ -67,7 +67,7 @@ public:
 
     template <typename Func>
     static auto map(const Src& src, Func&& func) requires detail::SetLikeContainer<Src> {
-        using Dest = detail::WithInnerType_T<Src, std::invoke_result_t<Func, T>>;
+        using Dest = WithInnerType_T<Src, std::invoke_result_t<Func, T>>;
         Dest result;
         std::transform(src.begin(), src.end(), std::inserter(result, result.end()), [&func](auto&& x) { return func(x); });
         return result;
@@ -75,7 +75,7 @@ public:
 
     template <typename Func>
     static auto map(Src&& src, Func&& func) requires detail::SetLikeContainer<Src> {
-        using Dest = detail::WithInnerType_T<Src, std::invoke_result_t<Func, T>>;
+        using Dest = WithInnerType_T<Src, std::invoke_result_t<Func, T>>;
         Dest result;
         std::transform(src.begin(), src.end(), std::inserter(result, result.end()), [&func](auto&& x) {
             return func(std::move(x));

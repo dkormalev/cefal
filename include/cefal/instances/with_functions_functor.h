@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "cefal/detail/type_traits.h"
+#include "cefal/common.h"
 #include "cefal/functor.h"
 
 #include <algorithm>
@@ -34,9 +34,8 @@
 namespace cefal::instances {
 namespace detail {
 // clang-format off
-template <typename T>
-concept HasFunctorMethods = requires(T t, cefal::detail::InnerType_T<T> value,
-                                     std::function<cefal::detail::InnerType_T<T>(cefal::detail::InnerType_T<T>)> f) {
+template <typename T, typename InnerT = InnerType_T<T>>
+concept HasFunctorMethods = requires(T t, InnerT value, std::function<InnerT(InnerT)> f) {
     { T::unit(std::move(value)) } -> std::same_as<T>;
     { t.map(std::move(f)) } -> std::same_as<T>;
 };

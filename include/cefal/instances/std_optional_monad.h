@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "cefal/detail/type_traits.h"
+#include "cefal/common.h"
 #include "cefal/monad.h"
 
 #include <algorithm>
@@ -37,7 +37,7 @@ template <typename T>
 struct Monad<std::optional<T>> {
     template <typename Func, typename Result = std::invoke_result_t<Func, T>>
     static Result flatMap(const std::optional<T>& src, Func&& func) {
-        static_assert(std::is_same_v<Result, std::optional<detail::InnerType_T<Result>>>, "Result should be std::optional");
+        static_assert(std::is_same_v<Result, std::optional<InnerType_T<Result>>>, "Result should be std::optional");
         if (src)
             return func(*src);
         return std::nullopt;
@@ -45,7 +45,7 @@ struct Monad<std::optional<T>> {
 
     template <typename Func, typename Result = std::invoke_result_t<Func, T>>
     static Result flatMap(std::optional<T>&& src, Func&& func) {
-        static_assert(std::is_same_v<Result, std::optional<detail::InnerType_T<Result>>>, "Result should be std::optional");
+        static_assert(std::is_same_v<Result, std::optional<InnerType_T<Result>>>, "Result should be std::optional");
         if (src)
             return func(*std::move(src));
         return std::nullopt;

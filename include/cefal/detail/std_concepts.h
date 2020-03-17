@@ -25,8 +25,8 @@
 
 #pragma once
 
+#include "cefal/common.h"
 #include "cefal/detail/common_concepts.h"
-#include "cefal/detail/type_traits.h"
 
 #include <concepts>
 #include <iterator>

@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "cefal/detail/type_traits.h"
+#include "cefal/common.h"
 #include "cefal/monad.h"
 
 #include <algorithm>
@@ -34,8 +34,8 @@
 namespace cefal::instances {
 namespace detail {
 // clang-format off
-template <typename T>
-concept HasMonadMethods = requires(T t, std::function<T(cefal::detail::InnerType_T<T>)> f) {
+template <typename T, typename InnerT = InnerType_T<T>>
+concept HasMonadMethods = requires(T t, std::function<T(InnerT)> f) {
     { t.flatMap(std::move(f)) } -> std::same_as<T>;
 };
 // clang-format on
@@ -43,17 +43,15 @@ concept HasMonadMethods = requires(T t, std::function<T(cefal::detail::InnerType
 
 template <detail::HasMonadMethods T>
 struct Monad<T> {
-    template <typename Func, typename Result = std::invoke_result_t<Func, cefal::detail::InnerType_T<T>>>
+    template <typename Func, typename Result = std::invoke_result_t<Func, InnerType_T<T>>>
     static Result flatMap(const T& src, Func&& func) {
-        static_assert(std::is_same_v<Result, cefal::detail::WithInnerType_T<T, cefal::detail::InnerType_T<Result>>>,
-                      "Result should be same type as T");
+        static_assert(std::is_same_v<Result, WithInnerType_T<T, InnerType_T<Result>>>, "Result should be same type as T");
         return src.flatMap(std::forward<Func>(func));
     }
 
-    template <typename Func, typename Result = std::invoke_result_t<Func, cefal::detail::InnerType_T<T>>>
+    template <typename Func, typename Result = std::invoke_result_t<Func, InnerType_T<T>>>
     static Result flatMap(T&& src, Func&& func) {
-        static_assert(std::is_same_v<Result, cefal::detail::WithInnerType_T<T, cefal::detail::InnerType_T<Result>>>,
-                      "Result should be same type as T");
+        static_assert(std::is_same_v<Result, WithInnerType_T<T, InnerType_T<Result>>>, "Result should be same type as T");
         return std::move(src).flatMap(std::forward<Func>(func));
     }
 };

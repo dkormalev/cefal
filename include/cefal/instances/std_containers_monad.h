@@ -25,8 +25,8 @@
 
 #pragma once
 
+#include "cefal/common.h"
 #include "cefal/detail/std_concepts.h"
-#include "cefal/detail/type_traits.h"
 #include "cefal/monad.h"
 
 #include <algorithm>
@@ -36,12 +36,12 @@ namespace cefal::instances {
 template <detail::StdContainer Src>
 struct Monad<Src> {
 private:
-    using T = detail::InnerType_T<Src>;
+    using T = InnerType_T<Src>;
 
 public:
     template <typename Func, detail::SingleSocketedStdContainer RawResult = std::invoke_result_t<Func, T>>
     static auto flatMap(const Src& src, Func&& func) requires detail::VectorLikeContainer<Src> {
-        using Result = detail::WithInnerType_T<Src, detail::InnerType_T<RawResult>>;
+        using Result = WithInnerType_T<Src, InnerType_T<RawResult>>;
         Result result;
         for (auto&& t : src) {
             RawResult mapped = func(t);
@@ -53,7 +53,7 @@ public:
 
     template <typename Func, detail::SingleSocketedStdContainer RawResult = std::invoke_result_t<Func, T>>
     static auto flatMap(Src&& src, Func&& func) requires detail::VectorLikeContainer<Src> {
-        using Result = detail::WithInnerType_T<Src, detail::InnerType_T<RawResult>>;
+        using Result = WithInnerType_T<Src, InnerType_T<RawResult>>;
         Result result;
         for (auto&& t : src) {
             RawResult mapped = func(std::move(t));
@@ -65,7 +65,7 @@ public:
 
     template <typename Func, detail::SingleSocketedStdContainer RawResult = std::invoke_result_t<Func, T>>
     static auto flatMap(const Src& src, Func&& func) requires detail::SetLikeContainer<Src> {
-        using Result = detail::WithInnerType_T<Src, detail::InnerType_T<RawResult>>;
+        using Result = WithInnerType_T<Src, InnerType_T<RawResult>>;
         Result result;
         for (auto&& t : src) {
             RawResult mapped = func(t);
@@ -81,7 +81,7 @@ public:
 
     template <typename Func, detail::SingleSocketedStdContainer RawResult = std::invoke_result_t<Func, T>>
     static auto flatMap(Src&& src, Func&& func) requires detail::SetLikeContainer<Src> {
-        using Result = detail::WithInnerType_T<Src, detail::InnerType_T<RawResult>>;
+        using Result = WithInnerType_T<Src, InnerType_T<RawResult>>;
         Result result;
         for (auto&& t : src) {
             RawResult mapped = func(std::move(t));
