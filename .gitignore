@@ -1,0 +1,12 @@
+*.user
+build/
+build-*
+*-build-*
+bin
+.DS_Store
+*.xlsx
+*.o
+*.so
+.vs/
+CMakeSettings.json
+.idea/

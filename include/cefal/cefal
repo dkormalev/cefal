@@ -1,0 +1,3 @@
+#include "cefal/functor.h"
+#include "cefal/instances/std_all.h"
+#include "cefal/monad.h"
