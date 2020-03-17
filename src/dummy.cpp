@@ -33,7 +33,12 @@ struct SimpleImplementedMethods {
     };
 
     template <typename Func>
-    auto flatMap(Func f) const {
+    auto flat_map(Func f) const & {
+        return SimpleImplementedMethods{f(value).value};
+    };
+
+    template <typename Func>
+    auto flat_map(Func f) && {
         return SimpleImplementedMethods{f(value).value};
     };
 };

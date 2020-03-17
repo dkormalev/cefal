@@ -42,8 +42,10 @@ namespace concepts {
 template <typename F, typename InnerT = InnerType_T<std::remove_cvref_t<F>>, typename CleanF = std::remove_cvref_t<F>>
 concept Functor =
 requires(CleanF f, InnerT value, std::function<InnerT(InnerT)> converter) {
+    { instances::Functor<CleanF>::unit(value) } -> std::same_as<CleanF>;
     { instances::Functor<CleanF>::unit(std::move(value)) } -> std::same_as<CleanF>;
     { instances::Functor<CleanF>::map(f, std::move(converter)) } -> std::same_as<CleanF>;
+    { instances::Functor<CleanF>::map(std::move(f), std::move(converter)) } -> std::same_as<CleanF>;
 };
 // clang-format on
 } // namespace concepts

@@ -44,6 +44,7 @@ template <typename M, typename InnerT = InnerType_T<std::remove_cvref_t<M>>, typ
 concept Monad =
 Functor<CleanM, InnerT> && requires (CleanM m, std::function<CleanM(InnerT)> converter) {
   {instances::Monad<CleanM>::flatMap(m, std::move(converter))} -> std::same_as<CleanM>;
+  {instances::Monad<CleanM>::flatMap(std::move(m), std::move(converter))} -> std::same_as<CleanM>;
 };
 // clang-format on
 } // namespace concepts
