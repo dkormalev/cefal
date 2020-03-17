@@ -87,7 +87,16 @@ int main() {
     { ContainerTester<std::set<double>> x; }
     { ContainerTester<std::unordered_set<int>> x; }
     { ContainerTester<std::unordered_set<double>> x; }
-    std::vector<int> united = ops::unit<std::vector>(5);
+    std::vector<std::vector<int>> innerMapped = std::vector{1, 2, 3} | ops::map([](int x) { return ops::unit<std::vector>(x); })
+                                                                     | ops::innerFlatMap([](int x){ return std::vector{x + 1, x + 2}; })
+                                                                     | ops::innerMap([](int x){ return x * 3; });
+    std::cout << "innerMapped: " << innerMapped.size() << ": | ";
+    for (auto&& inner : innerMapped) {
+        for (int x : inner)
+            std::cout << x << " ";
+        std::cout << "| ";
+    }
+    std::cout << std::endl;
 
     ImplementedMethods<int> impl =
         ops::unit<ImplementedMethods>(42) | ops::map([](int x) {return x + 2;})

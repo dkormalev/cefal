@@ -67,5 +67,24 @@ template <typename Left, typename Func>
 inline auto operator|(Left&& left, flatMap<Func>&& op) {
     return std::move(op)(std::forward<Left>(left));
 }
+
+template <typename FuncT>
+struct innerFlatMap {
+    using Func = FuncT;
+    innerFlatMap(Func&& func) : func(std::move(func)) {}
+    innerFlatMap(const Func& func) : func(func) {}
+    template <concepts::Functor F, concepts::Monad InnerM = InnerType_T<std::remove_cvref_t<F>>>
+    inline auto operator()(F&& f) && {
+        return std::forward<F>(f) | map([this]<typename T>(T&& x) { return std::forward<T>(x) | flatMap(func); });
+    }
+
+private:
+    Func func;
+};
+
+template <typename Left, typename Func>
+inline auto operator|(Left&& left, innerFlatMap<Func>&& op) {
+    return std::move(op)(std::forward<Left>(left));
+}
 } // namespace ops
 } // namespace cefal
