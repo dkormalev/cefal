@@ -24,3 +24,24 @@
  */
 
 #pragma once
+
+#include "cefal/functor.h"
+
+#include <type_traits>
+#include <algorithm>
+#include <optional>
+
+namespace cefal::instances {
+template <typename T>
+struct Functor<std::optional<T>> {
+    static std::optional<T> unit(const T& x) { return x; }
+    static std::optional<T> unit(T&& x) { return std::move(x); }
+
+    template <typename Func, typename Result = std::optional<std::invoke_result_t<Func, T>>>
+    static Result map(const std::optional<T>& src, Func&& func) {
+        if (src)
+            return func(*src);
+        return std::nullopt;
+    }
+};
+} // namespace cefal::instances

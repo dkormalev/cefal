@@ -29,6 +29,7 @@
 #include "cefal/detail/type_traits.h"
 #include "cefal/monad.h"
 
+#include <type_traits>
 #include <algorithm>
 
 namespace cefal::instances {

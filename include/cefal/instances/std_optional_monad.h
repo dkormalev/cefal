@@ -24,3 +24,23 @@
  */
 
 #pragma once
+
+#include "cefal/detail/type_traits.h"
+#include "cefal/monad.h"
+
+#include <type_traits>
+#include <algorithm>
+#include <optional>
+
+namespace cefal::instances {
+template <typename T>
+struct Monad<std::optional<T>> {
+    template <typename Func, typename Result = std::invoke_result_t<Func, T>>
+    static Result flatMap(const std::optional<T>& src, Func&& func) {
+        static_assert(std::is_same_v<Result, std::optional<detail::InnerType_T<Result>>>, "Result should be std::optional");
+        if (src)
+            return func(*src);
+        return std::nullopt;
+    }
+};
+} // namespace cefal::instances
