@@ -50,28 +50,32 @@ Functor<CleanM, InnerT> && requires (CleanM m, std::function<CleanM(InnerT)> con
 } // namespace concepts
 
 namespace ops {
-template <typename FuncT>
+template <typename Func>
 struct flatMap {
-    using Func = FuncT;
     flatMap(Func&& func) : func(std::move(func)) {}
     flatMap(const Func& func) : func(func) {}
+
     template <concepts::Monad M>
-    friend auto operator|(M&& m, flatMap&& op) {
-        return instances::Monad<std::remove_cvref_t<M>>::flatMap(std::forward<M>(m), std::move(op.func));
+    auto operator()(M&& left) && {
+        return instances::Monad<std::remove_cvref_t<M>>::flatMap(std::forward<M>(left), std::move(func));
+    }
+    template <concepts::Monad M>
+    auto operator()(M&& left) const& {
+        return instances::Monad<std::remove_cvref_t<M>>::flatMap(std::forward<M>(left), func);
     }
 
 private:
     Func func;
 };
 
-template <typename FuncT>
+template <typename Func>
 struct innerFlatMap {
-    using Func = FuncT;
     innerFlatMap(Func&& func) : func(std::move(func)) {}
     innerFlatMap(const Func& func) : func(func) {}
+
     template <concepts::Functor F, concepts::Monad InnerM = InnerType_T<std::remove_cvref_t<F>>>
-    friend auto operator|(F&& f, innerFlatMap&& op) {
-        return std::forward<F>(f) | map([op]<typename T>(T&& x) { return std::forward<T>(x) | flatMap(op.func); });
+    auto operator()(F&& left) const& {
+        return std::forward<F>(left) | map([this]<typename T>(T&& x) { return std::forward<T>(x) | flatMap(func); });
     }
 
 private:

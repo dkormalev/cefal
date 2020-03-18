@@ -61,28 +61,32 @@ inline auto unit(T&& x) requires concepts::Functor<F<CleanT>> {
     return unit<F<CleanT>>(std::forward<T>(x));
 }
 
-template <typename FuncT>
+template <typename Func>
 struct map {
-    using Func = FuncT;
     map(Func&& func) : func(std::move(func)) {}
     map(const Func& func) : func(func) {}
+
     template <concepts::Functor F>
-    friend auto operator|(F&& f, map&& op) {
-        return instances::Functor<std::remove_cvref_t<F>>::map(std::forward<F>(f), std::move(op.func));
+    auto operator()(F&& left) && {
+        return instances::Functor<std::remove_cvref_t<F>>::map(std::forward<F>(left), std::move(func));
+    }
+    template <concepts::Functor F>
+    auto operator()(F&& left) const& {
+        return instances::Functor<std::remove_cvref_t<F>>::map(std::forward<F>(left), func);
     }
 
 private:
     Func func;
 };
 
-template <typename FuncT>
+template <typename Func>
 struct innerMap {
-    using Func = FuncT;
     innerMap(Func&& func) : func(std::move(func)) {}
     innerMap(const Func& func) : func(func) {}
+
     template <concepts::Functor F, concepts::Functor InnerF = InnerType_T<std::remove_cvref_t<F>>>
-    friend auto operator|(F&& f, innerMap&& op) {
-        return std::forward<F>(f) | map([&op]<typename T>(T&& x) { return std::forward<T>(x) | map(op.func); });
+    auto operator()(F&& left) const& {
+        return std::forward<F>(left) | map([this]<typename T>(T&& x) { return std::forward<T>(x) | map(func); });
     }
 
 private:

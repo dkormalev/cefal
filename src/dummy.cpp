@@ -56,11 +56,13 @@ struct WithInnerType<SimpleImplementedMethods, int> {
 
 template <concepts::Monad M>
 int testContainers(M&& m) {
-    return *(std::forward<M>(m) | ops::map([](int x) { return x + 5; })
-                                | ops::flatMap([](auto) { return std::vector<double>{4.5, 5.5}; })
-                                | ops::flatMap([](auto) { return std::set<double>{4.5, 5.5}; })
-                                | ops::map([](double x) { return int(x); }))
-                                 .begin();
+    auto flatMapper = ops::flatMap([](auto) { return std::vector<double>{4.5, 5.5}; });
+    auto rounder = ops::map([](double x) { return int(x); });
+    auto intermediate = std::forward<M>(m) | ops::map([](int x) { return x + 5; })
+                                           | flatMapper
+                                           | ops::flatMap([](auto) { return std::set<double>{4.5, 5.5}; });
+    auto final = std::move(rounder)(intermediate);
+    return *final.begin();
 }
 
 double testOptional(const std::optional<int>& opt) {

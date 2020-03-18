@@ -25,6 +25,8 @@
 
 #pragma once
 
+#include <utility>
+
 namespace cefal {
 template <typename...>
 struct InnerType;
@@ -43,4 +45,11 @@ struct WithInnerType<C<T, Ts...>, NewT> {
 };
 template <typename... Ts>
 using WithInnerType_T = WithInnerType<Ts...>::type;
+
+namespace ops {
+template <typename Left, typename Op>
+inline auto operator|(Left&& left, Op&& op) {
+    return std::forward<Op>(op)(std::forward<Left>(left));
+}
+}
 } // namespace cefal
