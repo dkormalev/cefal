@@ -25,44 +25,26 @@
 
 #pragma once
 
-#include <concepts>
-#include <utility>
+#include "cefal/common.h"
+#include "cefal/monoid.h"
 
-namespace cefal {
-template <typename...>
-struct InnerType;
-template <template <typename...> typename C, typename T, typename... Ts>
-struct InnerType<C<T, Ts...>> {
-    using type = T;
+#include <optional>
+#include <type_traits>
+
+namespace cefal::instances {
+template <concepts::Monoid M>
+struct Monoid<std::optional<M>> {
+    static std::optional<M> empty() { return std::nullopt; }
+
+    template <typename T1, typename T2>
+    static std::optional<M> append(T1&& left, T2&& right) {
+        static_assert(std::is_same_v<std::remove_cvref_t<T1>, std::optional<M>>, "Argument type should be the same as monoid");
+        static_assert(std::is_same_v<std::remove_cvref_t<T2>, std::optional<M>>, "Argument type should be the same as monoid");
+        if (!left)
+            return std::forward<T2>(right);
+        if (!right)
+            return std::forward<T1>(left);
+        return std::forward<T1>(left) | ops::append(std::forward<T2>(right));
+    }
 };
-template <typename T>
-using InnerType_T = InnerType<T>::type;
-
-template <typename...>
-struct WithInnerType;
-template <template <typename...> typename C, typename T, typename... Ts, typename NewT>
-struct WithInnerType<C<T, Ts...>, NewT> {
-    using type = C<NewT>;
-};
-template <typename... Ts>
-using WithInnerType_T = WithInnerType<Ts...>::type;
-
-template <std::integral T>
-struct Sum {
-    Sum(T x) : value(x) {}
-    T value;
-};
-
-template <std::integral T>
-struct Product {
-    Product(T x) : value(x) {}
-    T value;
-};
-
-namespace ops {
-template <typename Left, typename Op>
-inline auto operator|(Left&& left, Op&& op) {
-    return std::forward<Op>(op)(std::forward<Left>(left));
-}
-} // namespace ops
-} // namespace cefal
+} // namespace cefal::instances

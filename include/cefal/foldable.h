@@ -26,7 +26,6 @@
 #pragma once
 
 #include "cefal/common.h"
-#include "cefal/functor.h"
 
 #include <concepts>
 #include <functional>
@@ -35,50 +34,39 @@
 namespace cefal {
 namespace instances {
 template <typename T>
-struct Monad;
+struct Foldable;
 } // namespace instances
 
 namespace concepts {
 // clang-format off
-template <typename M, typename InnerT = InnerType_T<std::remove_cvref_t<M>>, typename CleanM = std::remove_cvref_t<M>>
-concept Monad =
-Functor<M> && requires (CleanM m, std::function<CleanM(InnerT)> converter) {
-  {instances::Monad<CleanM>::flatMap(m, std::move(converter))} -> std::same_as<CleanM>;
-  {instances::Monad<CleanM>::flatMap(std::move(m), std::move(converter))} -> std::same_as<CleanM>;
+template <typename T, typename InnerT = InnerType_T<std::remove_cvref_t<T>>, typename CleanT = std::remove_cvref_t<T>>
+concept Foldable =
+requires(CleanT x, InnerT init, std::function<InnerT(InnerT, InnerT)> converter) {
+    { instances::Foldable<CleanT>::foldLeft(x, init, std::move(converter)) } -> std::same_as<InnerT>;
+    { instances::Foldable<CleanT>::foldLeft(std::move(x), std::move(init), std::move(converter)) } -> std::same_as<InnerT>;
 };
 // clang-format on
 } // namespace concepts
 
 namespace ops {
-template <typename Func>
-struct flatMap {
-    flatMap(Func&& func) : func(std::move(func)) {}
-    flatMap(const Func& func) : func(func) {}
+template <typename Result, typename Func>
+struct foldLeft {
+    foldLeft(Result&& initial, Func&& func) : initial(std::move(initial)), func(std::move(func)) {}
+    foldLeft(const Result& initial, Func&& func) : initial(initial), func(std::move(func)) {}
+    foldLeft(Result&& initial, const Func& func) : initial(std::move(initial)), func(func) {}
+    foldLeft(const Result& initial, const Func& func) : initial(initial), func(func) {}
 
-    template <concepts::Monad M>
-    auto operator()(M&& left) && {
-        return instances::Monad<std::remove_cvref_t<M>>::flatMap(std::forward<M>(left), std::move(func));
+    template <concepts::Foldable F>
+    auto operator()(F&& left) && {
+        return instances::Foldable<std::remove_cvref_t<F>>::foldLeft(std::forward<F>(left), std::move(initial), std::move(func));
     }
-    template <concepts::Monad M>
-    auto operator()(M&& left) const& {
-        return instances::Monad<std::remove_cvref_t<M>>::flatMap(std::forward<M>(left), func);
-    }
-
-private:
-    Func func;
-};
-
-template <typename Func>
-struct innerFlatMap {
-    innerFlatMap(Func&& func) : func(std::move(func)) {}
-    innerFlatMap(const Func& func) : func(func) {}
-
-    template <concepts::Functor F, concepts::Monad InnerM = InnerType_T<std::remove_cvref_t<F>>>
+    template <concepts::Foldable F>
     auto operator()(F&& left) const& {
-        return std::forward<F>(left) | map([this]<typename T>(T&& x) { return std::forward<T>(x) | flatMap(func); });
+        return instances::Foldable<std::remove_cvref_t<F>>::foldLeft(std::forward<F>(left), initial, func);
     }
 
 private:
+    Result initial;
     Func func;
 };
 

@@ -25,44 +25,39 @@
 
 #pragma once
 
-#include <concepts>
-#include <utility>
+#include "cefal/common.h"
+#include "cefal/detail/std_concepts.h"
+#include "cefal/foldable.h"
 
-namespace cefal {
-template <typename...>
-struct InnerType;
-template <template <typename...> typename C, typename T, typename... Ts>
-struct InnerType<C<T, Ts...>> {
-    using type = T;
+#include <numeric>
+#include <type_traits>
+
+namespace cefal::instances {
+template <detail::SingleSocketedStdContainer Src>
+struct Foldable<Src> {
+    template <typename Result, typename Func>
+    static auto foldLeft(const Src& src, Result&& initial, Func&& func) {
+        return std::accumulate(src.begin(), src.end(), std::forward<Result>(initial), std::forward<Func>(func));
+    }
+
+    template <typename Result, typename Func>
+    static auto foldLeft(Src&& src, Result&& initial, Func&& func) requires detail::VectorLikeContainer<Src> {
+        using CleanResult = std::remove_cvref_t<Result>;
+        CleanResult result = std::forward<Result>(initial);
+        for (auto&& x : src) {
+            result = func(std::move(result), std::move(x));
+        }
+        return result;
+    }
+
+    template <typename Result, typename Func>
+    static auto foldLeft(Src&& src, Result&& initial, Func&& func) requires detail::SetLikeContainer<Src> {
+        using CleanResult = std::remove_cvref_t<Result>;
+        CleanResult result = std::forward<Result>(initial);
+        while (!src.empty()) {
+            result = func(std::move(result), std::move(src.extract(src.begin()).value()));
+        }
+        return result;
+    }
 };
-template <typename T>
-using InnerType_T = InnerType<T>::type;
-
-template <typename...>
-struct WithInnerType;
-template <template <typename...> typename C, typename T, typename... Ts, typename NewT>
-struct WithInnerType<C<T, Ts...>, NewT> {
-    using type = C<NewT>;
-};
-template <typename... Ts>
-using WithInnerType_T = WithInnerType<Ts...>::type;
-
-template <std::integral T>
-struct Sum {
-    Sum(T x) : value(x) {}
-    T value;
-};
-
-template <std::integral T>
-struct Product {
-    Product(T x) : value(x) {}
-    T value;
-};
-
-namespace ops {
-template <typename Left, typename Op>
-inline auto operator|(Left&& left, Op&& op) {
-    return std::forward<Op>(op)(std::forward<Left>(left));
-}
-} // namespace ops
-} // namespace cefal
+} // namespace cefal::instances

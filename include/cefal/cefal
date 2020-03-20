@@ -1,6 +1,0 @@
-#include "cefal/common.h"
-#include "cefal/functor.h"
-#include "cefal/monad.h"
-
-#include "cefal/instances/std_all.h"
-#include "cefal/instances/with_functions.h"

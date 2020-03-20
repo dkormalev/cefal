@@ -1,4 +1,11 @@
-#include "cefal/cefal"
+#include "cefal/instances/foldable/std_containers.h"
+#include "cefal/instances/monoid/std_containers.h"
+#include "cefal/instances/functor/from_foldable.h"
+#include "cefal/instances/monad/from_foldable.h"
+#include "cefal/instances/functor/with_functions.h"
+#include "cefal/instances/monad/with_functions.h"
+#include "cefal/instances/functor/std_optional.h"
+#include "cefal/instances/monad/std_optional.h"
 
 #include <iostream>
 #include <set>
@@ -56,11 +63,12 @@ struct WithInnerType<SimpleImplementedMethods, int> {
 
 template <concepts::Monad M>
 int testContainers(M&& m) {
-    auto flatMapper = ops::flatMap([](auto) { return std::vector<double>{4.5, 5.5}; });
+    using CleanM = std::remove_cvref_t<M>;
+    auto flatMapper = ops::flatMap([](auto) { return CleanM{4, 5}; });
     auto rounder = ops::map([](double x) { return int(x); });
     auto intermediate = std::forward<M>(m) | ops::map([](int x) { return x + 5; })
                                            | flatMapper
-                                           | ops::flatMap([](auto) { return std::set<double>{4.5, 5.5}; });
+                                           | ops::flatMap([](auto) { return CleanM{4, 5}; });
     auto final = std::move(rounder)(intermediate);
     return *final.begin();
 }

@@ -25,44 +25,35 @@
 
 #pragma once
 
+#include "cefal/common.h"
+#include "cefal/monoid.h"
+
 #include <concepts>
-#include <utility>
+#include <string>
+#include <type_traits>
 
-namespace cefal {
-template <typename...>
-struct InnerType;
-template <template <typename...> typename C, typename T, typename... Ts>
-struct InnerType<C<T, Ts...>> {
-    using type = T;
-};
-template <typename T>
-using InnerType_T = InnerType<T>::type;
+namespace cefal::instances {
+template <>
+struct Monoid<std::string> {
+    static std::string empty() { return {}; }
 
-template <typename...>
-struct WithInnerType;
-template <template <typename...> typename C, typename T, typename... Ts, typename NewT>
-struct WithInnerType<C<T, Ts...>, NewT> {
-    using type = C<NewT>;
-};
-template <typename... Ts>
-using WithInnerType_T = WithInnerType<Ts...>::type;
-
-template <std::integral T>
-struct Sum {
-    Sum(T x) : value(x) {}
-    T value;
+    template <typename T1, typename T2>
+    static Src append(T1&& left, T2&& right) {
+        static_assert(std::is_same_v<std::remove_cvref_t<T1>, std::string>, "Argument type should be the same as monoid");
+        static_assert(std::is_same_v<std::remove_cvref_t<T2>, std::string>, "Argument type should be the same as monoid");
+        return std::forward<T1>(left) + std::forward<T2>(right);
+    }
 };
 
 template <std::integral T>
-struct Product {
-    Product(T x) : value(x) {}
-    T value;
+struct Monoid<Sum<T>> {
+    static Sum<T> empty() { return static_cast<T>(0); }
+    static Sum<T> append(Sum<T> left, Sum<T> right) { return left.value + right.value; }
 };
 
-namespace ops {
-template <typename Left, typename Op>
-inline auto operator|(Left&& left, Op&& op) {
-    return std::forward<Op>(op)(std::forward<Left>(left));
-}
-} // namespace ops
-} // namespace cefal
+template <std::integral T>
+struct Monoid<Product<T>> {
+    static Product<T> empty() { return static_cast<T>(1); }
+    static Product<T> append(Product<T> left, Product<T> right) { return left.value * right.value; }
+};
+} // namespace cefal::instances
