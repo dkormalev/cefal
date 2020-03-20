@@ -1,3 +1,4 @@
+#include "cefal/cefal"
 #include "cefal/instances/monoid/basic_types.h"
 #include "cefal/instances/monoid/std_containers.h"
 #include "cefal/instances/monoid/with_functions.h"
