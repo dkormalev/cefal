@@ -35,7 +35,8 @@
 
 namespace cefal::instances {
 template <typename Src>
-requires concepts::Foldable<Src> && concepts::Monoid<Src> && (!detail::HasMonadMethods<Src>) && (!detail::HasMonadSnakeCaseMethods<Src>)
+requires concepts::Foldable<Src> && concepts::Monoid<Src>
+&& (!detail::HasMonadMethods<Src>) && (!detail::HasMonadSnakeCaseMethods<Src>)
 struct Monad<Src> {
 private:
     using T = InnerType_T<Src>;

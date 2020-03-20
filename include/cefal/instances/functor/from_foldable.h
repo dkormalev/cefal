@@ -35,7 +35,8 @@
 
 namespace cefal::instances {
 template <typename Src>
-requires concepts::Foldable<Src> && concepts::Monoid<Src> && (!concepts::SingletonEnabledMonoid<Src>) && (!detail::HasFunctorMethods<Src>)
+requires concepts::Foldable<Src> && concepts::Monoid<Src>
+&& (!concepts::SingletonEnabledMonoid<Src>) && (!detail::HasFunctorMethods<Src>)
 struct Functor<Src> {
 private:
     using T = InnerType_T<Src>;

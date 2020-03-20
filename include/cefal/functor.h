@@ -37,7 +37,7 @@ template <typename T>
 struct Functor;
 
 namespace detail {
-template<typename>
+template <typename>
 struct FunctorFromFunctionsExists;
 // clang-format off
 template <typename T, typename InnerT = InnerType_T<T>>
@@ -107,9 +107,9 @@ private:
 };
 
 template <typename Func>
-map(Func &&) -> map<std::remove_cvref_t<Func>>;
+map(Func&&) -> map<std::remove_cvref_t<Func>>;
 template <typename Func>
-innerMap(Func &&) -> innerMap<std::remove_cvref_t<Func>>;
+innerMap(Func&&) -> innerMap<std::remove_cvref_t<Func>>;
 
 } // namespace ops
 } // namespace cefal

@@ -38,7 +38,7 @@ template <typename T>
 struct Monad;
 
 namespace detail {
-template<typename>
+template <typename>
 struct MonadFromFunctionsExists;
 // clang-format off
 template <typename T, typename InnerT = InnerType_T<T>>
@@ -101,10 +101,9 @@ private:
 };
 
 template <typename Func>
-flatMap(Func &&) -> flatMap<std::remove_cvref_t<Func>>;
+flatMap(Func&&) -> flatMap<std::remove_cvref_t<Func>>;
 template <typename Func>
-innerFlatMap(Func &&) -> innerFlatMap<std::remove_cvref_t<Func>>;
-
+innerFlatMap(Func&&) -> innerFlatMap<std::remove_cvref_t<Func>>;
 
 } // namespace ops
 } // namespace cefal

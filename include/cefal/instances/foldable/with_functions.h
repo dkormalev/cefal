@@ -33,11 +33,11 @@
 
 namespace cefal::instances {
 namespace detail {
-    template<typename T>
-    struct FoldableFromFunctionsExists {
-        using type = T;
-    };
-}
+template <typename T>
+struct FoldableFromFunctionsExists {
+    using type = T;
+};
+} // namespace detail
 template <detail::HasFoldableMethods T>
 struct Foldable<T> {
     template <typename Result, typename Func>

@@ -42,7 +42,7 @@ template <typename T>
 struct Monoid;
 
 namespace detail {
-template<typename>
+template <typename>
 struct MonoidFromFunctionsExists;
 // clang-format off
 template <typename T>
@@ -111,7 +111,7 @@ private:
 };
 
 template <typename M>
-append(M &&) -> append<std::remove_cvref_t<M>>;
+append(M&&) -> append<std::remove_cvref_t<M>>;
 template <typename M>
 append(const helpers::SingletonFrom<M>&) -> append<helpers::SingletonFrom<M>>;
 template <typename M>

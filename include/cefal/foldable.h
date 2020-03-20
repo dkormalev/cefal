@@ -37,7 +37,7 @@ template <typename T>
 struct Foldable;
 
 namespace detail {
-template<typename>
+template <typename>
 struct FoldableFromFunctionsExists;
 // clang-format off
 template <typename T, typename InnerT = InnerType_T<T>>
@@ -89,7 +89,7 @@ private:
 };
 
 template <typename Result, typename Func>
-foldLeft(Result &&, Func &&) -> foldLeft<std::remove_cvref_t<Result>, std::remove_cvref_t<Func>>;
+foldLeft(Result&&, Func&&) -> foldLeft<std::remove_cvref_t<Result>, std::remove_cvref_t<Func>>;
 
 } // namespace ops
 } // namespace cefal

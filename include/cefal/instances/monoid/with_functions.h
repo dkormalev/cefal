@@ -33,21 +33,20 @@
 
 namespace cefal::instances {
 namespace detail {
-    template<typename T>
-    struct MonoidFromFunctionsExists {
-        using type = T;
-    };
-}
+template <typename T>
+struct MonoidFromFunctionsExists {
+    using type = T;
+};
+} // namespace detail
 template <detail::HasMonoidMethods T>
 struct Monoid<T> {
-    static T empty() {
-        return T::empty();
-    }
+    static T empty() { return T::empty(); }
 
     template <typename T1, typename T2>
     static T append(T1&& left, T2&& right) {
         static_assert(std::is_same_v<std::remove_cvref_t<T1>, T>, "Argument type should be the same as monoid");
-        static_assert(std::is_same_v<std::remove_cvref_t<T2>, T> || std::is_same_v<std::remove_cvref_t<T2>, helpers::SingletonFrom<T>>, "Argument type should be the same as monoid");
+        static_assert(std::is_same_v<std::remove_cvref_t<T2>, T> || std::is_same_v<std::remove_cvref_t<T2>, helpers::SingletonFrom<T>>,
+                      "Argument type should be the same as monoid");
         return std::forward<T1>(left).append(std::forward<T2>(right));
     }
 };

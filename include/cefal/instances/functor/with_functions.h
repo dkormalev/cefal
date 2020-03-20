@@ -33,11 +33,11 @@
 
 namespace cefal::instances {
 namespace detail {
-    template<typename T>
-    struct FunctorFromFunctionsExists {
-        using type = T;
-    };
-}
+template <typename T>
+struct FunctorFromFunctionsExists {
+    using type = T;
+};
+} // namespace detail
 template <detail::HasFunctorMethods T>
 struct Functor<T> {
     template <typename Inner>

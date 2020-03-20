@@ -33,11 +33,11 @@
 
 namespace cefal::instances {
 namespace detail {
-    template<typename T>
-    struct MonadFromFunctionsExists {
-        using type = T;
-    };
-}
+template <typename T>
+struct MonadFromFunctionsExists {
+    using type = T;
+};
+} // namespace detail
 template <detail::HasMonadMethods T>
 struct Monad<T> {
     template <typename Func, typename Result = std::invoke_result_t<Func, InnerType_T<T>>>
