@@ -34,7 +34,7 @@
 namespace cefal {
 namespace helpers {
 template <typename T>
-struct LightWrapper;
+struct SingletonFrom;
 }
 
 namespace instances {
@@ -66,8 +66,8 @@ requires(CleanT x1, CleanT x2) {
 };
 
 template <typename T, typename InnerT = InnerType_T<std::remove_cvref_t<T>>, typename CleanT = std::remove_cvref_t<T>>
-concept MonoidWithLightWrapper =
-Monoid<T> && requires (CleanT x, helpers::LightWrapper<CleanT> wrapper) {
+concept SingletonEnabledMonoid =
+Monoid<T> && requires (CleanT x, helpers::SingletonFrom<CleanT> wrapper) {
     { instances::Monoid<CleanT>::append(std::move(x), std::move(wrapper)) } -> std::same_as<CleanT>;
 };
 // clang-format on
@@ -97,9 +97,9 @@ private:
 };
 
 template <concepts::Monoid M>
-struct append<helpers::LightWrapper<M>> {
-    append(helpers::LightWrapper<M>&& right) : right(std::move(right)) {}
-    append(const helpers::LightWrapper<M>& right) : right(right) {}
+struct append<helpers::SingletonFrom<M>> {
+    append(helpers::SingletonFrom<M>&& right) : right(std::move(right)) {}
+    append(const helpers::SingletonFrom<M>& right) : right(right) {}
 
     inline auto operator()(M&& left) && { return instances::Monoid<M>::append(std::move(left), std::move(right)); }
     inline auto operator()(const M& left) && { return instances::Monoid<M>::append(left, std::move(right)); }
@@ -107,15 +107,15 @@ struct append<helpers::LightWrapper<M>> {
     inline auto operator()(const M& left) const& { return instances::Monoid<M>::append(left, right); }
 
 private:
-    helpers::LightWrapper<M> right;
+    helpers::SingletonFrom<M> right;
 };
 
 template <typename M>
 append(M &&) -> append<std::remove_cvref_t<M>>;
 template <typename M>
-append(const helpers::LightWrapper<M>&) -> append<helpers::LightWrapper<M>>;
+append(const helpers::SingletonFrom<M>&) -> append<helpers::SingletonFrom<M>>;
 template <typename M>
-append(helpers::LightWrapper<M>&&) -> append<helpers::LightWrapper<M>>;
+append(helpers::SingletonFrom<M>&&) -> append<helpers::SingletonFrom<M>>;
 
 } // namespace ops
 } // namespace cefal

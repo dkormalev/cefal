@@ -35,7 +35,7 @@
 
 namespace cefal::instances {
 template <typename Src>
-requires concepts::Foldable<Src> && concepts::Monoid<Src> && (!concepts::MonoidWithLightWrapper<Src>) && (!detail::HasFunctorMethods<Src>)
+requires concepts::Foldable<Src> && concepts::Monoid<Src> && (!concepts::SingletonEnabledMonoid<Src>) && (!detail::HasFunctorMethods<Src>)
 struct Functor<Src> {
 private:
     using T = InnerType_T<Src>;
@@ -67,7 +67,7 @@ public:
 };
 
 template <typename Src>
-requires concepts::Foldable<Src> && concepts::MonoidWithLightWrapper<Src> && (!detail::HasFunctorMethods<Src>)
+requires concepts::Foldable<Src> && concepts::SingletonEnabledMonoid<Src> && (!detail::HasFunctorMethods<Src>)
 struct Functor<Src> {
 private:
     using T = InnerType_T<Src>;
@@ -82,7 +82,7 @@ public:
         return instances::Foldable<Src>::foldLeft(src,
                                                   instances::Monoid<Dest>::empty(),
                                                   [func = std::forward<Func>(func)](Dest&& l, const T& r) {
-                                                      return std::move(l) | ops::append(helpers::LightWrapper<Dest>{func(r)});
+                                                      return std::move(l) | ops::append(helpers::SingletonFrom<Dest>{func(r)});
                                                   });
     }
 
@@ -93,7 +93,7 @@ public:
                                                   instances::Monoid<Dest>::empty(),
                                                   [func = std::forward<Func>(func)](Dest&& l, T&& r) {
                                                       return std::move(l)
-                                                             | ops::append(helpers::LightWrapper<Dest>{func(std::move(r))});
+                                                             | ops::append(helpers::SingletonFrom<Dest>{func(std::move(r))});
                                                   });
     }
 };

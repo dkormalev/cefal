@@ -34,7 +34,7 @@
 namespace cefal {
 namespace helpers {
 template <cefal::detail::SingleSocketedStdContainer Src>
-struct LightWrapper<Src> {
+struct SingletonFrom<Src> {
     using value_type = typename Src::value_type;
     value_type value;
 };
@@ -94,7 +94,7 @@ struct Monoid<Src> {
     }
 
     template <typename T>
-    static Src append(T&& left, helpers::LightWrapper<Src>&& right) {
+    static Src append(T&& left, helpers::SingletonFrom<Src>&& right) {
         static_assert(std::is_same_v<std::remove_cvref_t<T>, Src>, "Argument type should be the same as monoid");
         std::remove_cvref_t<T> result = std::forward<T>(left);
         result.push_back(std::move(right.value));
@@ -116,7 +116,7 @@ struct Monoid<Src> {
     }
 
     template <typename T>
-    static Src append(T&& left, helpers::LightWrapper<Src>&& right) {
+    static Src append(T&& left, helpers::SingletonFrom<Src>&& right) {
         static_assert(std::is_same_v<std::remove_cvref_t<T>, Src>, "Argument type should be the same as monoid");
         std::remove_cvref_t<T> result = std::forward<T>(left);
         result.insert(std::move(right.value));

@@ -47,7 +47,7 @@ struct Monoid<T> {
     template <typename T1, typename T2>
     static T append(T1&& left, T2&& right) {
         static_assert(std::is_same_v<std::remove_cvref_t<T1>, T>, "Argument type should be the same as monoid");
-        static_assert(std::is_same_v<std::remove_cvref_t<T2>, T> || std::is_same_v<std::remove_cvref_t<T2>, helpers::LightWrapper<T>>, "Argument type should be the same as monoid");
+        static_assert(std::is_same_v<std::remove_cvref_t<T2>, T> || std::is_same_v<std::remove_cvref_t<T2>, helpers::SingletonFrom<T>>, "Argument type should be the same as monoid");
         return std::forward<T1>(left).append(std::forward<T2>(right));
     }
 };

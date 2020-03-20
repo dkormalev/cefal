@@ -27,7 +27,7 @@ struct ImplementedMethods {
         return ImplementedMethods{value | ops::append(other.value)};
     };
 
-    auto append(helpers::LightWrapper<ImplementedMethods> other) const {
+    auto append(helpers::SingletonFrom<ImplementedMethods> other) const {
         return ImplementedMethods{value | ops::append(other.value)};
     };
 
@@ -54,7 +54,7 @@ struct ImplementedMethods {
 
 namespace cefal::helpers {
 template <typename Src>
-struct LightWrapper<ImplementedMethods<Src>> {
+struct SingletonFrom<ImplementedMethods<Src>> {
     Src value;
 };
 }
