@@ -26,6 +26,7 @@
 #pragma once
 
 #include "cefal/common.h"
+#include "cefal/filterable.h"
 #include "cefal/foldable.h"
 #include "cefal/functor.h"
 #include "cefal/monoid.h"
@@ -36,59 +37,57 @@
 namespace cefal::instances {
 template <typename Src>
 // clang-format off
-requires concepts::Foldable<Src> && concepts::Monoid<Src>
-&& (!concepts::SingletonEnabledMonoid<Src>) && (!detail::HasFunctorMethods<Src>)
+requires concepts::Functor<Src> && concepts::Foldable<Src> && concepts::Monoid<Src>
+&& (!concepts::SingletonEnabledMonoid<Src>) && (!detail::HasFilterableMethods<Src>)
 // clang-format on
-struct Functor<Src> {
+struct Filterable<Src> {
 private:
     using T = InnerType_T<Src>;
 
 public:
-    static Src unit(const T& x) { return Src{x}; }
-    static Src unit(T&& x) { return Src{std::move(x)}; }
-
     template <typename Func>
-    static auto map(const Src& src, Func&& func) {
-        using Dest = WithInnerType_T<Src, std::invoke_result_t<Func, T>>;
-        return src | ops::foldLeft(ops::empty<Dest>(), [func = std::forward<Func>(func)](Dest&& l, const T& r) {
-                   return std::move(l) | ops::append(unit(func(r)));
+    static auto filter(const Src& src, Func&& func) {
+        return src | ops::foldLeft(ops::empty<Src>(), [func = std::forward<Func>(func)](Src&& l, const T& r) {
+                   if (func(r))
+                       l = std::move(l) | ops::append(ops::unit<Src>(r));
+                   return std::move(l);
                });
     }
 
     template <typename Func>
-    static auto map(Src&& src, Func&& func) {
-        using Dest = WithInnerType_T<Src, std::invoke_result_t<Func, T>>;
-        return std::move(src) | ops::foldLeft(ops::empty<Dest>(), [func = std::forward<Func>(func)](Dest&& l, T&& r) {
-                   return std::move(l) | ops::append(unit(func(std::move(r))));
+    static auto filter(Src&& src, Func&& func) {
+        return std::move(src) | ops::foldLeft(ops::empty<Src>(), [func = std::forward<Func>(func)](Src&& l, T&& r) {
+                   if (func(r))
+                       l = std::move(l) | ops::append(ops::unit<Src>(std::move(r)));
+                   return std::move(l);
                });
     }
 };
 
 template <typename Src>
 // clang-format off
-requires concepts::Foldable<Src> && concepts::SingletonEnabledMonoid<Src> && (!detail::HasFunctorMethods<Src>)
+requires concepts::Foldable<Src> && concepts::SingletonEnabledMonoid<Src> && (!detail::HasFilterableMethods<Src>)
 // clang-format on
-struct Functor<Src> {
+struct Filterable<Src> {
 private:
     using T = InnerType_T<Src>;
 
 public:
-    static Src unit(const T& x) { return Src{x}; }
-    static Src unit(T&& x) { return Src{std::move(x)}; }
-
     template <typename Func>
-    static auto map(const Src& src, Func&& func) {
-        using Dest = WithInnerType_T<Src, std::invoke_result_t<Func, T>>;
-        return src | ops::foldLeft(ops::empty<Dest>(), [func = std::forward<Func>(func)](Dest&& l, const T& r) {
-                   return std::move(l) | ops::append(helpers::SingletonFrom<Dest>{func(r)});
+    static auto filter(const Src& src, Func&& func) {
+        return src | ops::foldLeft(ops::empty<Src>(), [func = std::forward<Func>(func)](Src&& l, const T& r) {
+                   if (func(r))
+                       l = std::move(l) | ops::append(helpers::SingletonFrom<Src>(r));
+                   return std::move(l);
                });
     }
 
     template <typename Func>
-    static auto map(Src&& src, Func&& func) {
-        using Dest = WithInnerType_T<Src, std::invoke_result_t<Func, T>>;
-        return std::move(src) | ops::foldLeft(ops::empty<Dest>(), [func = std::forward<Func>(func)](Dest&& l, T&& r) {
-                   return std::move(l) | ops::append(helpers::SingletonFrom<Dest>{func(std::move(r))});
+    static auto filter(Src&& src, Func&& func) {
+        return std::move(src) | ops::foldLeft(ops::empty<Src>(), [func = std::forward<Func>(func)](Src&& l, T&& r) {
+                   if (func(r))
+                       l = std::move(l) | ops::append(helpers::SingletonFrom<Src>(std::move(r)));
+                   return std::move(l);
                });
     }
 };

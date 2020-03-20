@@ -34,17 +34,16 @@
 namespace cefal {
 namespace instances {
 template <typename T>
-struct Functor;
+struct Filterable;
 
 namespace detail {
 template <typename>
-struct FunctorFromFunctionsExists;
+struct FilterableFromFunctionsExists;
 // clang-format off
 template <typename T, typename InnerT = InnerType_T<T>>
-concept HasFunctorMethods = requires(T x, InnerT value, std::function<InnerT(InnerT)> f) {
-    typename FunctorFromFunctionsExists<T>::type;
-    { T::unit(std::move(value)) } -> std::same_as<T>;
-    { x.map(std::move(f)) } -> std::same_as<T>;
+concept HasFilterableMethods = requires(T x, std::function<bool(InnerT)> predicate) {
+    typename FilterableFromFunctionsExists<T>::type;
+    { x.filter(std::move(predicate)) } -> std::same_as<T>;
 };
 // clang-format on
 } // namespace detail
@@ -53,39 +52,27 @@ concept HasFunctorMethods = requires(T x, InnerT value, std::function<InnerT(Inn
 namespace concepts {
 // clang-format off
 template <typename T, typename InnerT = InnerType_T<std::remove_cvref_t<T>>, typename CleanT = std::remove_cvref_t<T>>
-concept Functor =
-requires(CleanT x, InnerT value, std::function<InnerT(InnerT)> converter) {
-    { instances::Functor<CleanT>::unit(value) } -> std::same_as<CleanT>;
-    { instances::Functor<CleanT>::unit(std::move(value)) } -> std::same_as<CleanT>;
-    { instances::Functor<CleanT>::map(x, std::move(converter)) } -> std::same_as<CleanT>;
-    { instances::Functor<CleanT>::map(std::move(x), std::move(converter)) } -> std::same_as<CleanT>;
+concept Filterable =
+requires(CleanT x, std::function<bool(InnerT)> predicate) {
+    { instances::Filterable<CleanT>::filter(x, std::move(predicate)) } -> std::same_as<CleanT>;
+    { instances::Filterable<CleanT>::filter(std::move(x), std::move(predicate)) } -> std::same_as<CleanT>;
 };
 // clang-format on
 } // namespace concepts
 
 namespace ops {
-template <concepts::Functor F, typename T>
-inline F unit(T&& x) {
-    return instances::Functor<F>::unit(std::forward<T>(x));
-}
-
-template <template <typename...> typename F, typename T, typename CleanT = std::remove_cvref_t<T>>
-inline auto unit(T&& x) requires concepts::Functor<F<CleanT>> {
-    return unit<F<CleanT>>(std::forward<T>(x));
-}
-
 template <typename Func>
-struct map {
-    map(Func&& func) : func(std::move(func)) {}
-    map(const Func& func) : func(func) {}
+struct filter {
+    filter(Func&& func) : func(std::move(func)) {}
+    filter(const Func& func) : func(func) {}
 
-    template <concepts::Functor F>
+    template <concepts::Filterable F>
     auto operator()(F&& left) && {
-        return instances::Functor<std::remove_cvref_t<F>>::map(std::forward<F>(left), std::move(func));
+        return instances::Filterable<std::remove_cvref_t<F>>::filter(std::forward<F>(left), std::move(func));
     }
-    template <concepts::Functor F>
+    template <concepts::Filterable F>
     auto operator()(F&& left) const& {
-        return instances::Functor<std::remove_cvref_t<F>>::map(std::forward<F>(left), func);
+        return instances::Filterable<std::remove_cvref_t<F>>::filter(std::forward<F>(left), func);
     }
 
 private:
@@ -93,13 +80,13 @@ private:
 };
 
 template <typename Func>
-struct innerMap {
-    innerMap(Func&& func) : func(std::move(func)) {}
-    innerMap(const Func& func) : func(func) {}
+struct innerFilter {
+    innerFilter(Func&& func) : func(std::move(func)) {}
+    innerFilter(const Func& func) : func(func) {}
 
-    template <concepts::Functor F, concepts::Functor InnerF = InnerType_T<std::remove_cvref_t<F>>>
+    template <concepts::Functor F, concepts::Filterable InnerF = InnerType_T<std::remove_cvref_t<F>>>
     auto operator()(F&& left) const& {
-        return std::forward<F>(left) | map([this]<typename T>(T&& x) { return std::forward<T>(x) | map(func); });
+        return std::forward<F>(left) | map([this]<typename T>(T&& x) { return std::forward<T>(x) | filter(func); });
     }
 
 private:
@@ -107,9 +94,9 @@ private:
 };
 
 template <typename Func>
-map(Func &&) -> map<std::remove_cvref_t<Func>>;
+filter(Func &&) -> filter<std::remove_cvref_t<Func>>;
 template <typename Func>
-innerMap(Func &&) -> innerMap<std::remove_cvref_t<Func>>;
+innerFilter(Func &&) -> innerFilter<std::remove_cvref_t<Func>>;
 
 } // namespace ops
 } // namespace cefal

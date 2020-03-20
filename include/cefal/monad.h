@@ -42,15 +42,15 @@ template <typename>
 struct MonadFromFunctionsExists;
 // clang-format off
 template <typename T, typename InnerT = InnerType_T<T>>
-concept HasMonadMethods = requires(T t, std::function<T(InnerT)> f) {
+concept HasMonadMethods = requires(T x, std::function<T(InnerT)> f) {
     typename MonadFromFunctionsExists<T>::type;
-    { std::move(t).flatMap(std::move(f)) } -> std::same_as<T>;
+    { std::move(x).flatMap(std::move(f)) } -> std::same_as<T>;
 };
 
 template <typename T, typename InnerT = InnerType_T<T>>
-concept HasMonadSnakeCaseMethods = requires(T t, std::function<T(InnerT)> f) {
+concept HasMonadSnakeCaseMethods = requires(T x, std::function<T(InnerT)> f) {
     typename MonadFromFunctionsExists<T>::type;
-    { std::move(t).flat_map(std::move(f)) } -> std::same_as<T>;
+    { std::move(x).flat_map(std::move(f)) } -> std::same_as<T>;
 };
 // clang-format on
 } // namespace detail
@@ -58,11 +58,11 @@ concept HasMonadSnakeCaseMethods = requires(T t, std::function<T(InnerT)> f) {
 
 namespace concepts {
 // clang-format off
-template <typename M, typename InnerT = InnerType_T<std::remove_cvref_t<M>>, typename CleanM = std::remove_cvref_t<M>>
+template <typename T, typename InnerT = InnerType_T<std::remove_cvref_t<T>>, typename CleanT = std::remove_cvref_t<T>>
 concept Monad =
-Functor<M> && requires (CleanM m, std::function<CleanM(InnerT)> converter) {
-  {instances::Monad<CleanM>::flatMap(m, std::move(converter))} -> std::same_as<CleanM>;
-  {instances::Monad<CleanM>::flatMap(std::move(m), std::move(converter))} -> std::same_as<CleanM>;
+Functor<T> && requires (CleanT x, std::function<CleanT(InnerT)> converter) {
+  {instances::Monad<CleanT>::flatMap(x, std::move(converter))} -> std::same_as<CleanT>;
+  {instances::Monad<CleanT>::flatMap(std::move(x), std::move(converter))} -> std::same_as<CleanT>;
 };
 // clang-format on
 } // namespace concepts
@@ -101,9 +101,9 @@ private:
 };
 
 template <typename Func>
-flatMap(Func&&) -> flatMap<std::remove_cvref_t<Func>>;
+flatMap(Func &&) -> flatMap<std::remove_cvref_t<Func>>;
 template <typename Func>
-innerFlatMap(Func&&) -> innerFlatMap<std::remove_cvref_t<Func>>;
+innerFlatMap(Func &&) -> innerFlatMap<std::remove_cvref_t<Func>>;
 
 } // namespace ops
 } // namespace cefal

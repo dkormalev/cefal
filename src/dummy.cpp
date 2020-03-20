@@ -2,6 +2,9 @@
 #include "cefal/instances/monoid/basic_types.h"
 #include "cefal/instances/monoid/std_containers.h"
 #include "cefal/instances/monoid/with_functions.h"
+#include "cefal/instances/filterable/from_foldable.h"
+#include "cefal/instances/filterable/with_functions.h"
+#include "cefal/instances/filterable/std_optional.h"
 #include "cefal/instances/foldable/std_containers.h"
 #include "cefal/instances/foldable/with_functions.h"
 #include "cefal/instances/functor/from_foldable.h"
@@ -40,6 +43,11 @@ struct ImplementedMethods {
     template <typename Result, typename Func>
     auto foldLeft(Result&& initial, Func func) && {
         return func(std::forward<Result>(initial), std::move(value));
+    };
+
+    template <typename Func>
+    auto filter(Func f) const {
+        return ImplementedMethods{value};
     };
 
     template <typename Func>
@@ -96,9 +104,11 @@ int testContainers(M&& m) {
     using CleanM = std::remove_cvref_t<M>;
     auto flatMapper = ops::flatMap([](auto) { return CleanM{4, 5}; });
     auto rounder = ops::map([](double x) { return int(x); });
+    auto filter = ops::filter([](double x) { return x > 4; });
     auto intermediate = std::forward<M>(m) | ops::map([](int x) { return x + 5; })
                                            | flatMapper
-                                           | ops::flatMap([](auto) { return CleanM{4, 5}; });
+                                           | ops::flatMap([](auto) { return CleanM{4, 5}; })
+                                           | std::move(filter);
     auto final = std::move(rounder)(intermediate);
     return *final.begin();
 }
@@ -106,7 +116,8 @@ int testContainers(M&& m) {
 double testOptional(const std::optional<int>& opt) {
     auto result = opt | ops::map([](auto x) {return x * 2;})
                       | ops::flatMap([](auto x) -> std::optional<double> {if (x < 5) return std::nullopt; return x;})
-                      | ops::map([](auto x) {return x * 3;});
+                      | ops::map([](auto x) {return x * 3;})
+                      | ops::filter([](auto x) {return true;});
     return result ? *result : -1;
 }
 
@@ -133,6 +144,7 @@ int main() {
     { ContainerTester<std::unordered_set<int>> x; }
     { ContainerTester<std::unordered_set<double>> x; }
     std::vector<std::vector<int>> innerMapped = std::vector{1, 2, 3} | ops::map([](int x) { return ops::unit<std::vector>(x); })
+                                                                     | ops::innerFilter([](int x){ return x % 2; })
                                                                      | ops::innerFlatMap([](int x){ return std::vector{x + 1, x + 2}; })
                                                                      | ops::innerMap([](int x){ return x * 3; });
     std::cout << "innerMapped: " << innerMapped.size() << ": | ";
@@ -147,6 +159,7 @@ int main() {
     ops::unit<ImplementedMethods<Sum<int>>>(Sum(42));
     ImplementedMethods<Sum<int>> impl =
         ops::unit<ImplementedMethods>(Sum(42)) | ops::map([](int x) -> Sum<int> {return x + 2;})
+                                               | ops::filter([](auto x) {return true;})
                                                | ops::flatMap([](int x) {return ImplementedMethods<Sum<int>>{x * 3};});
     std::cout << impl.value.value << std::endl;
 

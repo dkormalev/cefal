@@ -25,39 +25,27 @@
 
 #pragma once
 
-#include "cefal/common.h"
-#include "cefal/foldable.h"
-#include "cefal/monad.h"
-#include "cefal/monoid.h"
+#include "cefal/filterable.h"
 
 #include <algorithm>
+#include <optional>
 #include <type_traits>
 
 namespace cefal::instances {
-template <typename Src>
-// clang-format off
-requires concepts::Foldable<Src> && concepts::Monoid<Src>
-&& (!detail::HasMonadMethods<Src>) && (!detail::HasMonadSnakeCaseMethods<Src>)
-// clang-format on
-struct Monad<Src> {
-private:
-    using T = InnerType_T<Src>;
-
-public:
-    template <typename Func, concepts::Monoid Dest = std::invoke_result_t<Func, T>>
-    static auto flatMap(const Src& src, Func&& func) {
-        static_assert(std::is_same_v<Dest, WithInnerType_T<Src, InnerType_T<Dest>>>, "Function should return same type");
-        return src | ops::foldLeft(ops::empty<Dest>(), [func = std::forward<Func>(func)](Dest&& l, const T& r) {
-                   return std::move(l) | ops::append(func(r));
-               });
+template <typename T>
+struct Filterable<std::optional<T>> {
+    template <typename Func>
+    static std::optional<T> filter(const std::optional<T>& src, Func&& func) {
+        if (src && func(*src))
+            return src;
+        return std::nullopt;
     }
 
-    template <typename Func, concepts::Monoid Dest = std::invoke_result_t<Func, T>>
-    static auto flatMap(Src&& src, Func&& func) {
-        static_assert(std::is_same_v<Dest, WithInnerType_T<Src, InnerType_T<Dest>>>, "Function should return same type");
-        return std::move(src) | ops::foldLeft(ops::empty<Dest>(), [func = std::forward<Func>(func)](Dest&& l, T&& r) {
-                   return std::move(l) | ops::append(func(std::move(r)));
-               });
+    template <typename Func>
+    static std::optional<T> map(std::optional<T>&& src, Func&& func) {
+        if (src && func(*src))
+            return std::move(src);
+        return std::nullopt;
     }
 };
 } // namespace cefal::instances

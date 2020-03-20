@@ -44,9 +44,8 @@ struct Foldable<Src> {
     static auto foldLeft(Src&& src, Result&& initial, Func&& func) requires cefal::detail::VectorLikeContainer<Src> {
         using CleanResult = std::remove_cvref_t<Result>;
         CleanResult result = std::forward<Result>(initial);
-        for (auto&& x : src) {
+        for (auto&& x : src)
             result = func(std::move(result), std::move(x));
-        }
         return result;
     }
 
@@ -54,9 +53,8 @@ struct Foldable<Src> {
     static auto foldLeft(Src&& src, Result&& initial, Func&& func) requires cefal::detail::SetLikeContainer<Src> {
         using CleanResult = std::remove_cvref_t<Result>;
         CleanResult result = std::forward<Result>(initial);
-        while (!src.empty()) {
+        while (!src.empty())
             result = func(std::move(result), std::move(src.extract(src.begin()).value()));
-        }
         return result;
     }
 };
