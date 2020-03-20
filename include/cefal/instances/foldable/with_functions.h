@@ -27,38 +27,40 @@
 
 #include "cefal/common.h"
 #include "cefal/foldable.h"
-#include "cefal/monad.h"
-#include "cefal/monoid.h"
 
 #include <algorithm>
 #include <type_traits>
 
 namespace cefal::instances {
-template <typename Src>
-requires concepts::Foldable<Src> && concepts::Monoid<Src> && (!detail::HasMonadMethods<Src>) && (!detail::HasMonadSnakeCaseMethods<Src>)
-struct Monad<Src> {
-private:
-    using T = InnerType_T<Src>;
-
-public:
-    template <typename Func, concepts::Monoid Dest = std::invoke_result_t<Func, T>>
-    static auto flatMap(const Src& src, Func&& func) {
-        static_assert(std::is_same_v<Dest, WithInnerType_T<Src, InnerType_T<Dest>>>, "Function should return same type");
-        using DestMonoid = instances::Monoid<Dest>;
-        return instances::Foldable<Src>::foldLeft(src, DestMonoid::empty(), [func = std::forward<Func>(func)](Dest&& l, const T& r) {
-            return std::move(l) | ops::append(func(r));
-        });
+namespace detail {
+    template<typename T>
+    struct FoldableFromFunctionsExists {
+        using type = T;
+    };
+}
+template <detail::HasFoldableMethods T>
+struct Foldable<T> {
+    template <typename Result, typename Func>
+    static std::remove_cvref_t<Result> foldLeft(const T& src, Result&& initial, Func&& func) {
+        return src.foldLeft(std::forward<Result>(initial), std::forward<Func>(func));
     }
 
-    template <typename Func, concepts::Monoid Dest = std::invoke_result_t<Func, T>>
-    static auto flatMap(Src&& src, Func&& func) {
-        static_assert(std::is_same_v<Dest, WithInnerType_T<Src, InnerType_T<Dest>>>, "Function should return same type");
-        using DestMonoid = instances::Monoid<Dest>;
-        return instances::Foldable<Src>::foldLeft(std::move(src),
-                                                  DestMonoid::empty(),
-                                                  [func = std::forward<Func>(func)](Dest&& l, T&& r) {
-                                                      return std::move(l) | ops::append(func(std::move(r)));
-                                                  });
+    template <typename Result, typename Func>
+    static std::remove_cvref_t<Result> foldLeft(T&& src, Result&& initial, Func&& func) {
+        return std::move(src).foldLeft(std::forward<Result>(initial), std::forward<Func>(func));
+    }
+};
+
+template <detail::HasFoldableSnakeCaseMethods T>
+struct Foldable<T> {
+    template <typename Result, typename Func>
+    static std::remove_cvref_t<Result> foldLeft(const T& src, Result&& initial, Func&& func) {
+        return src.fold_left(std::forward<Result>(initial), std::forward<Func>(func));
+    }
+
+    template <typename Result, typename Func>
+    static std::remove_cvref_t<Result> foldLeft(T&& src, Result&& initial, Func&& func) {
+        return std::move(src).fold_left(std::forward<Result>(initial), std::forward<Func>(func));
     }
 };
 } // namespace cefal::instances

@@ -49,14 +49,16 @@ using WithInnerType_T = WithInnerType<Ts...>::type;
 
 template <std::integral T>
 struct Sum {
-    Sum(T x) : value(x) {}
+    Sum(T x = T()) : value(x) {}
     T value;
+    operator T() const { return value; }
 };
 
 template <std::integral T>
 struct Product {
-    Product(T x) : value(x) {}
+    Product(T x = T()) : value(x) {}
     T value;
+    operator T() const { return value; }
 };
 
 namespace ops {

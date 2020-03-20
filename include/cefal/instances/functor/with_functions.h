@@ -33,15 +33,11 @@
 
 namespace cefal::instances {
 namespace detail {
-// clang-format off
-template <typename T, typename InnerT = InnerType_T<T>>
-concept HasFunctorMethods = requires(T t, InnerT value, std::function<InnerT(InnerT)> f) {
-    { T::unit(std::move(value)) } -> std::same_as<T>;
-    { t.map(std::move(f)) } -> std::same_as<T>;
-};
-// clang-format on
-} // namespace detail
-
+    template<typename T>
+    struct FunctorFromFunctionsExists {
+        using type = T;
+    };
+}
 template <detail::HasFunctorMethods T>
 struct Functor<T> {
     template <typename Inner>

@@ -36,6 +36,24 @@ namespace cefal {
 namespace instances {
 template <typename T>
 struct Monad;
+
+namespace detail {
+template<typename>
+struct MonadFromFunctionsExists;
+// clang-format off
+template <typename T, typename InnerT = InnerType_T<T>>
+concept HasMonadMethods = requires(T t, std::function<T(InnerT)> f) {
+    typename MonadFromFunctionsExists<T>::type;
+    { std::move(t).flatMap(std::move(f)) } -> std::same_as<T>;
+};
+
+template <typename T, typename InnerT = InnerType_T<T>>
+concept HasMonadSnakeCaseMethods = requires(T t, std::function<T(InnerT)> f) {
+    typename MonadFromFunctionsExists<T>::type;
+    { std::move(t).flat_map(std::move(f)) } -> std::same_as<T>;
+};
+// clang-format on
+} // namespace detail
 } // namespace instances
 
 namespace concepts {
@@ -81,6 +99,12 @@ struct innerFlatMap {
 private:
     Func func;
 };
+
+template <typename Func>
+flatMap(Func &&) -> flatMap<std::remove_cvref_t<Func>>;
+template <typename Func>
+innerFlatMap(Func &&) -> innerFlatMap<std::remove_cvref_t<Func>>;
+
 
 } // namespace ops
 } // namespace cefal

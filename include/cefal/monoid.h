@@ -40,6 +40,19 @@ struct LightWrapper;
 namespace instances {
 template <typename T>
 struct Monoid;
+
+namespace detail {
+template<typename>
+struct MonoidFromFunctionsExists;
+// clang-format off
+template <typename T>
+concept HasMonoidMethods = requires(T t1, T t2) {
+    typename MonoidFromFunctionsExists<T>::type;
+    { T::empty() } -> std::same_as<T>;
+    { t1.append(std::move(t2)) } -> std::same_as<T>;
+};
+// clang-format on
+} // namespace detail
 } // namespace instances
 
 namespace concepts {
@@ -97,14 +110,12 @@ private:
     helpers::LightWrapper<M> right;
 };
 
-template <concepts::Monoid M>
-append(const M&) -> append<M>;
-template <concepts::Monoid M>
-append(M &&) -> append<M>;
-template <concepts::Monoid M>
+template <typename M>
+append(M &&) -> append<std::remove_cvref_t<M>>;
+template <typename M>
 append(const helpers::LightWrapper<M>&) -> append<helpers::LightWrapper<M>>;
-template <concepts::Monoid M>
-append(helpers::LightWrapper<M> &&) -> append<helpers::LightWrapper<M>>;
+template <typename M>
+append(helpers::LightWrapper<M>&&) -> append<helpers::LightWrapper<M>>;
 
 } // namespace ops
 } // namespace cefal

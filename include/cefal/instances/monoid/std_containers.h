@@ -33,7 +33,7 @@
 
 namespace cefal {
 namespace helpers {
-template <detail::SingleSocketedStdContainer Src>
+template <cefal::detail::SingleSocketedStdContainer Src>
 struct LightWrapper<Src> {
     using value_type = typename Src::value_type;
     value_type value;
@@ -41,7 +41,7 @@ struct LightWrapper<Src> {
 } // namespace helpers
 
 namespace instances {
-template <detail::VectorLikeContainer Src>
+template <cefal::detail::VectorLikeContainer Src>
 struct Monoid<Src> {
     static Src empty() { return Src(); }
 
@@ -102,7 +102,7 @@ struct Monoid<Src> {
     }
 };
 
-template <detail::SetLikeContainer Src>
+template <cefal::detail::SetLikeContainer Src>
 struct Monoid<Src> {
     static Src empty() { return Src(); }
 

@@ -38,7 +38,7 @@ struct Monoid<std::string> {
     static std::string empty() { return {}; }
 
     template <typename T1, typename T2>
-    static Src append(T1&& left, T2&& right) {
+    static std::string append(T1&& left, T2&& right) {
         static_assert(std::is_same_v<std::remove_cvref_t<T1>, std::string>, "Argument type should be the same as monoid");
         static_assert(std::is_same_v<std::remove_cvref_t<T2>, std::string>, "Argument type should be the same as monoid");
         return std::forward<T1>(left) + std::forward<T2>(right);

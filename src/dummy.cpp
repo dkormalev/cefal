@@ -1,10 +1,13 @@
-#include "cefal/instances/foldable/std_containers.h"
+#include "cefal/instances/monoid/basic_types.h"
 #include "cefal/instances/monoid/std_containers.h"
+#include "cefal/instances/monoid/with_functions.h"
+#include "cefal/instances/foldable/std_containers.h"
+#include "cefal/instances/foldable/with_functions.h"
 #include "cefal/instances/functor/from_foldable.h"
-#include "cefal/instances/monad/from_foldable.h"
 #include "cefal/instances/functor/with_functions.h"
-#include "cefal/instances/monad/with_functions.h"
 #include "cefal/instances/functor/std_optional.h"
+#include "cefal/instances/monad/from_foldable.h"
+#include "cefal/instances/monad/with_functions.h"
 #include "cefal/instances/monad/std_optional.h"
 
 #include <iostream>
@@ -14,10 +17,29 @@
 
 using namespace cefal;
 
-template <typename T>
+template <concepts::Monoid T>
 struct ImplementedMethods {
     T value;
     static ImplementedMethods unit(T x) { return {x}; }
+    static ImplementedMethods empty() { return {T()}; }
+
+    auto append(ImplementedMethods other) const {
+        return ImplementedMethods{value | ops::append(other.value)};
+    };
+
+    auto append(helpers::LightWrapper<ImplementedMethods> other) const {
+        return ImplementedMethods{value | ops::append(other.value)};
+    };
+
+    template <typename Result, typename Func>
+    auto foldLeft(Result&& initial, Func func) const& {
+        return func(std::forward<Result>(initial), value);
+    };
+
+    template <typename Result, typename Func>
+    auto foldLeft(Result&& initial, Func func) && {
+        return func(std::forward<Result>(initial), std::move(value));
+    };
 
     template <typename Func>
     auto map(Func f) const {
@@ -29,6 +51,13 @@ struct ImplementedMethods {
         return ImplementedMethods{f(value).value};
     };
 };
+
+namespace cefal::helpers {
+template <typename Src>
+struct LightWrapper<ImplementedMethods<Src>> {
+    Src value;
+};
+}
 
 struct SimpleImplementedMethods {
     int value;
@@ -113,10 +142,12 @@ int main() {
     }
     std::cout << std::endl;
 
-    ImplementedMethods<int> impl =
-        ops::unit<ImplementedMethods>(42) | ops::map([](int x) {return x + 2;})
-                                          | ops::flatMap([](int x) {return ImplementedMethods<int>{x * 3};});
-    std::cout << impl.value << std::endl;
+    ops::empty<ImplementedMethods<Sum<int>>>() | ops::foldLeft(0, [](int a, Sum<int> b) {return a + b.value;});
+    ops::unit<ImplementedMethods<Sum<int>>>(Sum(42));
+    ImplementedMethods<Sum<int>> impl =
+        ops::unit<ImplementedMethods>(Sum(42)) | ops::map([](int x) -> Sum<int> {return x + 2;})
+                                               | ops::flatMap([](int x) {return ImplementedMethods<Sum<int>>{x * 3};});
+    std::cout << impl.value.value << std::endl;
 
     SimpleImplementedMethods nonTemplatedImpl =
         ops::unit<SimpleImplementedMethods>(42) | ops::map([](int x) {return x + 2;})

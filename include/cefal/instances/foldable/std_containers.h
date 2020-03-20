@@ -33,7 +33,7 @@
 #include <type_traits>
 
 namespace cefal::instances {
-template <detail::SingleSocketedStdContainer Src>
+template <cefal::detail::SingleSocketedStdContainer Src>
 struct Foldable<Src> {
     template <typename Result, typename Func>
     static auto foldLeft(const Src& src, Result&& initial, Func&& func) {
@@ -41,7 +41,7 @@ struct Foldable<Src> {
     }
 
     template <typename Result, typename Func>
-    static auto foldLeft(Src&& src, Result&& initial, Func&& func) requires detail::VectorLikeContainer<Src> {
+    static auto foldLeft(Src&& src, Result&& initial, Func&& func) requires cefal::detail::VectorLikeContainer<Src> {
         using CleanResult = std::remove_cvref_t<Result>;
         CleanResult result = std::forward<Result>(initial);
         for (auto&& x : src) {
@@ -51,7 +51,7 @@ struct Foldable<Src> {
     }
 
     template <typename Result, typename Func>
-    static auto foldLeft(Src&& src, Result&& initial, Func&& func) requires detail::SetLikeContainer<Src> {
+    static auto foldLeft(Src&& src, Result&& initial, Func&& func) requires cefal::detail::SetLikeContainer<Src> {
         using CleanResult = std::remove_cvref_t<Result>;
         CleanResult result = std::forward<Result>(initial);
         while (!src.empty()) {

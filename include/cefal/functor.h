@@ -35,6 +35,19 @@ namespace cefal {
 namespace instances {
 template <typename T>
 struct Functor;
+
+namespace detail {
+template<typename>
+struct FunctorFromFunctionsExists;
+// clang-format off
+template <typename T, typename InnerT = InnerType_T<T>>
+concept HasFunctorMethods = requires(T t, InnerT value, std::function<InnerT(InnerT)> f) {
+    typename FunctorFromFunctionsExists<T>::type;
+    { T::unit(std::move(value)) } -> std::same_as<T>;
+    { t.map(std::move(f)) } -> std::same_as<T>;
+};
+// clang-format on
+} // namespace detail
 } // namespace instances
 
 namespace concepts {
@@ -92,6 +105,11 @@ struct innerMap {
 private:
     Func func;
 };
+
+template <typename Func>
+map(Func &&) -> map<std::remove_cvref_t<Func>>;
+template <typename Func>
+innerMap(Func &&) -> innerMap<std::remove_cvref_t<Func>>;
 
 } // namespace ops
 } // namespace cefal

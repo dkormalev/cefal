@@ -35,6 +35,24 @@ namespace cefal {
 namespace instances {
 template <typename T>
 struct Foldable;
+
+namespace detail {
+template<typename>
+struct FoldableFromFunctionsExists;
+// clang-format off
+template <typename T, typename InnerT = InnerType_T<T>>
+concept HasFoldableMethods = requires(T t, InnerT initial, std::function<InnerT(InnerT, InnerT)> f) {
+    typename FoldableFromFunctionsExists<T>::type;
+    { std::move(t).foldLeft(std::move(initial), std::move(f)) } -> std::same_as<InnerT>;
+};
+
+template <typename T, typename InnerT = InnerType_T<T>>
+concept HasFoldableSnakeCaseMethods = requires(T t, InnerT initial, std::function<InnerT(InnerT, InnerT)> f) {
+    typename FoldableFromFunctionsExists<T>::type;
+    { std::move(t).fold_left(std::move(initial), std::move(f)) } -> std::same_as<InnerT>;
+};
+// clang-format on
+} // namespace detail
 } // namespace instances
 
 namespace concepts {
@@ -69,6 +87,9 @@ private:
     Result initial;
     Func func;
 };
+
+template <typename Result, typename Func>
+foldLeft(Result &&, Func &&) -> foldLeft<std::remove_cvref_t<Result>, std::remove_cvref_t<Func>>;
 
 } // namespace ops
 } // namespace cefal

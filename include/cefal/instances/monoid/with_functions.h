@@ -26,39 +26,29 @@
 #pragma once
 
 #include "cefal/common.h"
-#include "cefal/foldable.h"
-#include "cefal/monad.h"
 #include "cefal/monoid.h"
 
 #include <algorithm>
 #include <type_traits>
 
 namespace cefal::instances {
-template <typename Src>
-requires concepts::Foldable<Src> && concepts::Monoid<Src> && (!detail::HasMonadMethods<Src>) && (!detail::HasMonadSnakeCaseMethods<Src>)
-struct Monad<Src> {
-private:
-    using T = InnerType_T<Src>;
-
-public:
-    template <typename Func, concepts::Monoid Dest = std::invoke_result_t<Func, T>>
-    static auto flatMap(const Src& src, Func&& func) {
-        static_assert(std::is_same_v<Dest, WithInnerType_T<Src, InnerType_T<Dest>>>, "Function should return same type");
-        using DestMonoid = instances::Monoid<Dest>;
-        return instances::Foldable<Src>::foldLeft(src, DestMonoid::empty(), [func = std::forward<Func>(func)](Dest&& l, const T& r) {
-            return std::move(l) | ops::append(func(r));
-        });
+namespace detail {
+    template<typename T>
+    struct MonoidFromFunctionsExists {
+        using type = T;
+    };
+}
+template <detail::HasMonoidMethods T>
+struct Monoid<T> {
+    static T empty() {
+        return T::empty();
     }
 
-    template <typename Func, concepts::Monoid Dest = std::invoke_result_t<Func, T>>
-    static auto flatMap(Src&& src, Func&& func) {
-        static_assert(std::is_same_v<Dest, WithInnerType_T<Src, InnerType_T<Dest>>>, "Function should return same type");
-        using DestMonoid = instances::Monoid<Dest>;
-        return instances::Foldable<Src>::foldLeft(std::move(src),
-                                                  DestMonoid::empty(),
-                                                  [func = std::forward<Func>(func)](Dest&& l, T&& r) {
-                                                      return std::move(l) | ops::append(func(std::move(r)));
-                                                  });
+    template <typename T1, typename T2>
+    static T append(T1&& left, T2&& right) {
+        static_assert(std::is_same_v<std::remove_cvref_t<T1>, T>, "Argument type should be the same as monoid");
+        static_assert(std::is_same_v<std::remove_cvref_t<T2>, T> || std::is_same_v<std::remove_cvref_t<T2>, helpers::LightWrapper<T>>, "Argument type should be the same as monoid");
+        return std::forward<T1>(left).append(std::forward<T2>(right));
     }
 };
 } // namespace cefal::instances
