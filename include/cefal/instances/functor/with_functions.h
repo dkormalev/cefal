@@ -45,14 +45,12 @@ struct Functor<T> {
         return T::unit(std::forward<Inner>(x));
     }
 
-    template <typename Func>
-    static auto map(const T& src, Func&& func) {
-        return src.map(std::forward<Func>(func));
-    }
-
-    template <typename Func>
-    static auto map(T&& src, Func&& func) {
-        return std::move(src).map(std::forward<Func>(func));
+    template <typename Input, typename Func>
+    // clang-format off
+    requires std::same_as<std::remove_cvref_t<Input>, T>
+        // clang-format on
+        static auto map(Input&& src, Func&& func) {
+        return std::forward<Input>(src).map(std::forward<Func>(func));
     }
 };
 } // namespace cefal::instances

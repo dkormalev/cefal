@@ -40,27 +40,23 @@ struct FoldableFromFunctionsExists {
 } // namespace detail
 template <detail::HasFoldableMethods T>
 struct Foldable<T> {
-    template <typename Result, typename Func>
-    static std::remove_cvref_t<Result> foldLeft(const T& src, Result&& initial, Func&& func) {
-        return src.foldLeft(std::forward<Result>(initial), std::forward<Func>(func));
-    }
-
-    template <typename Result, typename Func>
-    static std::remove_cvref_t<Result> foldLeft(T&& src, Result&& initial, Func&& func) {
-        return std::move(src).foldLeft(std::forward<Result>(initial), std::forward<Func>(func));
+    template <typename Input, typename Result, typename Func>
+    // clang-format off
+    requires std::same_as<std::remove_cvref_t<Input>, T>
+        // clang-format on
+        static std::remove_cvref_t<Result> foldLeft(Input&& src, Result&& initial, Func&& func) {
+        return std::forward<Input>(src).foldLeft(std::forward<Result>(initial), std::forward<Func>(func));
     }
 };
 
 template <detail::HasFoldableSnakeCaseMethods T>
 struct Foldable<T> {
-    template <typename Result, typename Func>
-    static std::remove_cvref_t<Result> foldLeft(const T& src, Result&& initial, Func&& func) {
-        return src.fold_left(std::forward<Result>(initial), std::forward<Func>(func));
-    }
-
-    template <typename Result, typename Func>
-    static std::remove_cvref_t<Result> foldLeft(T&& src, Result&& initial, Func&& func) {
-        return std::move(src).fold_left(std::forward<Result>(initial), std::forward<Func>(func));
+    template <typename Input, typename Result, typename Func>
+    // clang-format off
+    requires std::same_as<std::remove_cvref_t<Input>, T>
+        // clang-format on
+        static std::remove_cvref_t<Result> foldLeft(Input&& src, Result&& initial, Func&& func) {
+        return std::forward<Input>(src).fold_left(std::forward<Result>(initial), std::forward<Func>(func));
     }
 };
 } // namespace cefal::instances

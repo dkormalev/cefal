@@ -40,14 +40,12 @@ struct FilterableFromFunctionsExists {
 } // namespace detail
 template <detail::HasFilterableMethods T>
 struct Filterable<T> {
-    template <typename Func>
-    static auto filter(const T& src, Func&& func) {
-        return src.filter(std::forward<Func>(func));
-    }
-
-    template <typename Func>
-    static auto filter(T&& src, Func&& func) {
-        return std::move(src).filter(std::forward<Func>(func));
+    template <typename Input, typename Func>
+    // clang-format off
+    requires std::same_as<std::remove_cvref_t<Input>, T>
+        // clang-format on
+        static auto filter(Input&& src, Func&& func) {
+        return std::forward<Input>(src).filter(std::forward<Func>(func));
     }
 };
 } // namespace cefal::instances

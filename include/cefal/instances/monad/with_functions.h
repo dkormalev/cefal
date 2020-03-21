@@ -40,31 +40,23 @@ struct MonadFromFunctionsExists {
 } // namespace detail
 template <detail::HasMonadMethods T>
 struct Monad<T> {
-    template <typename Func, typename Result = std::invoke_result_t<Func, InnerType_T<T>>>
-    static Result flatMap(const T& src, Func&& func) {
-        static_assert(std::is_same_v<Result, WithInnerType_T<T, InnerType_T<Result>>>, "Result should be same type as T");
-        return src.flatMap(std::forward<Func>(func));
-    }
-
-    template <typename Func, typename Result = std::invoke_result_t<Func, InnerType_T<T>>>
-    static Result flatMap(T&& src, Func&& func) {
-        static_assert(std::is_same_v<Result, WithInnerType_T<T, InnerType_T<Result>>>, "Result should be same type as T");
-        return std::move(src).flatMap(std::forward<Func>(func));
+    template <typename Input, typename Func, typename Result = std::invoke_result_t<Func, InnerType_T<T>>>
+    // clang-format off
+    requires std::same_as<std::remove_cvref_t<Input>, T>
+        // clang-format on
+        static Result flatMap(Input&& src, Func&& func) {
+        return std::forward<Input>(src).flatMap(std::forward<Func>(func));
     }
 };
 
 template <detail::HasMonadSnakeCaseMethods T>
 struct Monad<T> {
-    template <typename Func, typename Result = std::invoke_result_t<Func, InnerType_T<T>>>
-    static Result flatMap(const T& src, Func&& func) {
-        static_assert(std::is_same_v<Result, WithInnerType_T<T, InnerType_T<Result>>>, "Result should be same type as T");
-        return src.flat_map(std::forward<Func>(func));
-    }
-
-    template <typename Func, typename Result = std::invoke_result_t<Func, InnerType_T<T>>>
-    static Result flatMap(T&& src, Func&& func) {
-        static_assert(std::is_same_v<Result, WithInnerType_T<T, InnerType_T<Result>>>, "Result should be same type as T");
-        return std::move(src).flat_map(std::forward<Func>(func));
+    template <typename Input, typename Func, typename Result = std::invoke_result_t<Func, InnerType_T<T>>>
+    // clang-format off
+    requires std::same_as<std::remove_cvref_t<Input>, T>
+        // clang-format on
+        static Result flatMap(Input&& src, Func&& func) {
+        return std::forward<Input>(src).flat_map(std::forward<Func>(func));
     }
 };
 } // namespace cefal::instances

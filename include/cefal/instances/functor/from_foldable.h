@@ -34,39 +34,32 @@
 #include <type_traits>
 
 namespace cefal::instances {
-template <typename Src>
-// clang-format off
-requires concepts::Foldable<Src> && concepts::Monoid<Src>
-&& (!concepts::SingletonEnabledMonoid<Src>) && (!detail::HasFunctorMethods<Src>)
-// clang-format on
-struct Functor<Src> {
-private:
-    using T = InnerType_T<Src>;
-
-public:
-    static Src unit(const T& x) { return Src{x}; }
-    static Src unit(T&& x) { return Src{std::move(x)}; }
-
-    template <typename Func>
-    static auto map(const Src& src, Func&& func) {
-        using Dest = WithInnerType_T<Src, std::invoke_result_t<Func, T>>;
-        return src | ops::foldLeft(ops::empty<Dest>(), [func = std::forward<Func>(func)](Dest&& l, const T& r) {
-                   return std::move(l) | ops::append(unit(func(r)));
-               });
-    }
-
-    template <typename Func>
-    static auto map(Src&& src, Func&& func) {
-        using Dest = WithInnerType_T<Src, std::invoke_result_t<Func, T>>;
-        return std::move(src) | ops::foldLeft(ops::empty<Dest>(), [func = std::forward<Func>(func)](Dest&& l, T&& r) {
-                   return std::move(l) | ops::append(unit(func(std::move(r))));
-               });
-    }
+namespace detail {
+template <typename Src, typename Dest>
+concept TransferrableSize = requires(Src src, Dest dest) {
+    dest.reserve(src.size());
 };
 
+template <typename Dest, typename Src>
+requires TransferrableSize<Src, Dest> void prepareMapDestination(const Src& src, Dest&& dest) {
+    dest.reserve(src.size());
+}
+
+template <typename Dest, typename Src>
+void prepareMapDestination(const Src& src, Dest&& dest) {
+}
+
+template <typename Dest, typename Src>
+Dest createMapDestination(const Src& src) {
+    auto dest = ops::empty<Dest>();
+    prepareMapDestination(src, dest);
+    return dest;
+}
+} // namespace detail
+
 template <typename Src>
 // clang-format off
-requires concepts::Foldable<Src> && concepts::SingletonEnabledMonoid<Src> && (!detail::HasFunctorMethods<Src>)
+requires concepts::Foldable<Src> && concepts::Monoid<Src> && (!detail::HasFunctorMethods<Src>)
 // clang-format on
 struct Functor<Src> {
 private:
@@ -76,20 +69,30 @@ public:
     static Src unit(const T& x) { return Src{x}; }
     static Src unit(T&& x) { return Src{std::move(x)}; }
 
-    template <typename Func>
-    static auto map(const Src& src, Func&& func) {
+    template <typename Input, typename Func>
+    // clang-format off
+    requires std::same_as<std::remove_cvref_t<Input>, Src>
+        // clang-format on
+        static auto map(Input&& src, Func&& func) {
         using Dest = WithInnerType_T<Src, std::invoke_result_t<Func, T>>;
-        return src | ops::foldLeft(ops::empty<Dest>(), [func = std::forward<Func>(func)](Dest&& l, const T& r) {
-                   return std::move(l) | ops::append(helpers::SingletonFrom<Dest>{func(r)});
-               });
+        auto dest = detail::createMapDestination<Dest>(src);
+        return std::forward<Input>(src)
+               | ops::foldLeft(std::move(dest), [func = std::forward<Func>(func)]<typename T2>(Dest&& l, T2&& r) {
+                     return std::move(l) | ops::append(unit(func(std::forward<T2>(r))));
+                 });
     }
 
-    template <typename Func>
-    static auto map(Src&& src, Func&& func) {
+    template <typename Input, typename Func>
+    // clang-format off
+    requires std::same_as<std::remove_cvref_t<Input>, Src> && concepts::SingletonEnabledMonoid<Src>
+        // clang-format on
+        static auto map(Input&& src, Func&& func) {
         using Dest = WithInnerType_T<Src, std::invoke_result_t<Func, T>>;
-        return std::move(src) | ops::foldLeft(ops::empty<Dest>(), [func = std::forward<Func>(func)](Dest&& l, T&& r) {
-                   return std::move(l) | ops::append(helpers::SingletonFrom<Dest>{func(std::move(r))});
-               });
+        auto dest = detail::createMapDestination<Dest>(src);
+        return std::forward<Input>(src)
+               | ops::foldLeft(std::move(dest), [func = std::forward<Func>(func)]<typename T2>(Dest&& l, T2&& r) {
+                     return std::move(l) | ops::append(helpers::SingletonFrom<Dest>{func(std::forward<T2>(r))});
+                 });
     }
 };
 } // namespace cefal::instances

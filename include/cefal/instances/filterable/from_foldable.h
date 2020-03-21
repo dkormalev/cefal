@@ -37,58 +37,37 @@
 namespace cefal::instances {
 template <typename Src>
 // clang-format off
-requires concepts::Functor<Src> && concepts::Foldable<Src> && concepts::Monoid<Src>
-&& (!concepts::SingletonEnabledMonoid<Src>) && (!detail::HasFilterableMethods<Src>)
+requires concepts::Foldable<Src> && concepts::Monoid<Src> && (!detail::HasFilterableMethods<Src>)
 // clang-format on
 struct Filterable<Src> {
 private:
     using T = InnerType_T<Src>;
 
 public:
-    template <typename Func>
-    static auto filter(const Src& src, Func&& func) {
-        return src | ops::foldLeft(ops::empty<Src>(), [func = std::forward<Func>(func)](Src&& l, const T& r) {
-                   if (func(r))
-                       l = std::move(l) | ops::append(ops::unit<Src>(r));
-                   return std::move(l);
-               });
+    template <typename Input, typename Func>
+    // clang-format off
+    requires std::same_as<std::remove_cvref_t<Input>, Src> && (!concepts::SingletonEnabledMonoid<Src>) && concepts::Functor<Src>
+    // clang-format on
+    static auto filter(Input&& src, Func&& func) {
+        return std::forward<Input>(src)
+               | ops::foldLeft(ops::empty<Src>(), [func = std::forward<Func>(func)]<typename T2>(Src&& l, T2&& r) {
+                     if (!func(r))
+                         return std::move(l);
+                     return std::move(l) | ops::append(ops::unit<Src>(std::forward<T2>(r)));
+                 });
     }
 
-    template <typename Func>
-    static auto filter(Src&& src, Func&& func) {
-        return std::move(src) | ops::foldLeft(ops::empty<Src>(), [func = std::forward<Func>(func)](Src&& l, T&& r) {
-                   if (func(r))
-                       l = std::move(l) | ops::append(ops::unit<Src>(std::move(r)));
-                   return std::move(l);
-               });
-    }
-};
-
-template <typename Src>
-// clang-format off
-requires concepts::Foldable<Src> && concepts::SingletonEnabledMonoid<Src> && (!detail::HasFilterableMethods<Src>)
-// clang-format on
-struct Filterable<Src> {
-private:
-    using T = InnerType_T<Src>;
-
-public:
-    template <typename Func>
-    static auto filter(const Src& src, Func&& func) {
-        return src | ops::foldLeft(ops::empty<Src>(), [func = std::forward<Func>(func)](Src&& l, const T& r) {
-                   if (func(r))
-                       l = std::move(l) | ops::append(helpers::SingletonFrom<Src>(r));
-                   return std::move(l);
-               });
-    }
-
-    template <typename Func>
-    static auto filter(Src&& src, Func&& func) {
-        return std::move(src) | ops::foldLeft(ops::empty<Src>(), [func = std::forward<Func>(func)](Src&& l, T&& r) {
-                   if (func(r))
-                       l = std::move(l) | ops::append(helpers::SingletonFrom<Src>(std::move(r)));
-                   return std::move(l);
-               });
+    template <typename Input, typename Func>
+    // clang-format off
+    requires std::same_as<std::remove_cvref_t<Input>, Src> && concepts::SingletonEnabledMonoid<Src>
+        // clang-format on
+        static auto filter(Input&& src, Func&& func) {
+        return std::forward<Input>(src)
+               | ops::foldLeft(ops::empty<Src>(), [func = std::forward<Func>(func)]<typename T2>(Src&& l, T2&& r) {
+                     if (!func(r))
+                         return std::move(l);
+                     return std::move(l) | ops::append(helpers::SingletonFrom<Src>{std::forward<T2>(r)});
+                 });
     }
 };
 } // namespace cefal::instances

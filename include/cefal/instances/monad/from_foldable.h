@@ -44,20 +44,16 @@ private:
     using T = InnerType_T<Src>;
 
 public:
-    template <typename Func, concepts::Monoid Dest = std::invoke_result_t<Func, T>>
-    static auto flatMap(const Src& src, Func&& func) {
+    template <typename Input, typename Func, concepts::Monoid Dest = std::invoke_result_t<Func, T>>
+    // clang-format off
+    requires std::same_as<std::remove_cvref_t<Input>, Src>
+        // clang-format on
+        static auto flatMap(Input&& src, Func&& func) {
         static_assert(std::is_same_v<Dest, WithInnerType_T<Src, InnerType_T<Dest>>>, "Function should return same type");
-        return src | ops::foldLeft(ops::empty<Dest>(), [func = std::forward<Func>(func)](Dest&& l, const T& r) {
-                   return std::move(l) | ops::append(func(r));
-               });
-    }
-
-    template <typename Func, concepts::Monoid Dest = std::invoke_result_t<Func, T>>
-    static auto flatMap(Src&& src, Func&& func) {
-        static_assert(std::is_same_v<Dest, WithInnerType_T<Src, InnerType_T<Dest>>>, "Function should return same type");
-        return std::move(src) | ops::foldLeft(ops::empty<Dest>(), [func = std::forward<Func>(func)](Dest&& l, T&& r) {
-                   return std::move(l) | ops::append(func(std::move(r)));
-               });
+        return std::forward<Input>(src)
+               | ops::foldLeft(ops::empty<Dest>(), [func = std::forward<Func>(func)]<typename T2>(Dest&& l, T2&& r) {
+                     return std::move(l) | ops::append(func(std::forward<T2>(r)));
+                 });
     }
 };
 } // namespace cefal::instances
