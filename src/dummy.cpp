@@ -18,6 +18,7 @@
 #include <set>
 #include <unordered_set>
 #include <vector>
+#include <chrono>
 
 using namespace cefal;
 
@@ -134,7 +135,271 @@ struct ContainerTester {
     }
 };
 
+void vectorsBenchmark(int repeats = 10, size_t size = 10'000'000) {
+    {
+        auto start = std::chrono::system_clock::now();
+        for (int i = 0; i < repeats; ++i) {
+            auto start2 = std::chrono::system_clock::now();
+            std::vector<int> src;
+            src.reserve(size);
+            for (int j = 0; j < size; ++j) src.push_back(start2.time_since_epoch().count() + j);
+
+            std::vector<double> dest;
+            dest.reserve(size);
+            std::transform(src.begin(), src.end(), std::back_inserter(dest), [](int x) {return x / 2.0; });
+        }
+        auto elapsed = std::chrono::system_clock::now() - start;
+    }
+
+    {
+        auto start = std::chrono::system_clock::now();
+        for (int i = 0; i < repeats; ++i) {
+            auto start2 = std::chrono::system_clock::now();
+            std::vector<int> src;
+            src.reserve(size);
+            for (int j = 0; j < size; ++j) src.push_back(start2.time_since_epoch().count() + j);
+
+            std::vector<double> dest;
+            // dest.reserve(size);
+            std::transform(src.begin(), src.end(), std::back_inserter(dest), [](int x) {return x / 2.0; });
+        }
+        auto elapsed = std::chrono::system_clock::now() - start;
+        std::cout << "Transform         = " << std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() << std::endl;
+    }
+
+    {
+        auto start = std::chrono::system_clock::now();
+        for (int i = 0; i < repeats; ++i) {
+            auto start2 = std::chrono::system_clock::now();
+            std::vector<int> src;
+            src.reserve(size);
+            for (int j = 0; j < size; ++j) src.push_back(start2.time_since_epoch().count() + j);
+
+            std::vector<double> dest = src | ops::map([](int x) {return x / 2.0; });
+        }
+        auto elapsed = std::chrono::system_clock::now() - start;
+        std::cout << "Map     Immutable = " << std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() << std::endl;
+    }
+
+    {
+        auto start = std::chrono::system_clock::now();
+        for (int i = 0; i < repeats; ++i) {
+            auto start2 = std::chrono::system_clock::now();
+            std::vector<int> src;
+            src.reserve(size);
+            for (int j = 0; j < size; ++j) src.push_back(start2.time_since_epoch().count() + j);
+
+            std::vector<double> dest;
+            dest.reserve(size);
+            std::transform(src.begin(), src.end(), std::back_inserter(dest), [](int x) {return x / 2.0; });
+        }
+        auto elapsed = std::chrono::system_clock::now() - start;
+        std::cout << "Transform/reserve = " << std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() << std::endl;
+    }
+
+    {
+        auto start = std::chrono::system_clock::now();
+        for (int i = 0; i < repeats; ++i) {
+            auto start2 = std::chrono::system_clock::now();
+            std::vector<int> src;
+            src.reserve(size);
+            for (int j = 0; j < size; ++j) src.push_back(start2.time_since_epoch().count() + j);
+
+            src = std::move(src) | ops::map([](int x) {return x / 2; });
+        }
+        auto elapsed = std::chrono::system_clock::now() - start;
+        std::cout << "Map       Mutable = " << std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() << std::endl;
+    }
+
+    {
+        auto start = std::chrono::system_clock::now();
+        for (int i = 0; i < repeats; ++i) {
+            auto start2 = std::chrono::system_clock::now();
+            std::vector<int> src;
+            src.reserve(size);
+            for (int j = 0; j < size; ++j) src.push_back(start2.time_since_epoch().count() + j);
+
+            std::transform(src.begin(), src.end(), src.begin(), [](int x) {return x / 2; });
+        }
+        auto elapsed = std::chrono::system_clock::now() - start;
+        std::cout << "Transform/self    = " << std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() << std::endl;
+    }
+
+    {
+        auto start = std::chrono::system_clock::now();
+        for (int i = 0; i < repeats; ++i) {
+            auto start2 = std::chrono::system_clock::now();
+            std::vector<int> src;
+            src.reserve(size);
+            for (int j = 0; j < size; ++j) src.push_back(start2.time_since_epoch().count() + j);
+
+            auto dest = src | ops::filter([](int x) {return x % 2; });
+        }
+        auto elapsed = std::chrono::system_clock::now() - start;
+        std::cout << "Filter  Immutable = " << std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() << std::endl;
+    }
+
+    {
+        auto start = std::chrono::system_clock::now();
+        for (int i = 0; i < repeats; ++i) {
+            auto start2 = std::chrono::system_clock::now();
+            std::vector<int> src;
+            src.reserve(size);
+            for (int j = 0; j < size; ++j) src.push_back(start2.time_since_epoch().count() + j);
+
+            auto dest = src;
+            std::erase_if(dest, [](int x) {return x % 2; });
+        }
+        auto elapsed = std::chrono::system_clock::now() - start;
+        std::cout << "EraseIf Immutable = " << std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() << std::endl;
+    }
+
+    {
+        auto start = std::chrono::system_clock::now();
+        for (int i = 0; i < repeats; ++i) {
+            auto start2 = std::chrono::system_clock::now();
+            std::vector<int> src;
+            src.reserve(size);
+            for (int j = 0; j < size; ++j) src.push_back(start2.time_since_epoch().count() + j);
+
+            src = std::move(src) | ops::filter([](int x) {return x % 2; });
+        }
+        auto elapsed = std::chrono::system_clock::now() - start;
+        std::cout << "Filter    Mutable = " << std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() << std::endl;
+    }
+
+    {
+        auto start = std::chrono::system_clock::now();
+        for (int i = 0; i < repeats; ++i) {
+            auto start2 = std::chrono::system_clock::now();
+            std::vector<int> src;
+            src.reserve(size);
+            for (int j = 0; j < size; ++j) src.push_back(start2.time_since_epoch().count() + j);
+
+            std::erase_if(src, [](int x) {return x % 2; });
+        }
+        auto elapsed = std::chrono::system_clock::now() - start;
+        std::cout << "EraseIf   Mutable = " << std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() << std::endl;
+    }
+}
+
+template<template <typename...> typename T>
+void setsBenchmark(int repeats = 10, size_t size = 100'000) {
+    {
+        auto start = std::chrono::system_clock::now();
+        for (int i = 0; i < repeats; ++i) {
+            auto start2 = std::chrono::system_clock::now();
+            T<int> src;
+            for (int j = 0; j < size; ++j) src.insert(start2.time_since_epoch().count() + j);
+
+            T<double> dest;
+            std::transform(src.begin(), src.end(), std::inserter(dest, dest.end()), [](int x) {return x / 2.0; });
+        }
+        auto elapsed = std::chrono::system_clock::now() - start;
+    }
+
+    {
+        auto start = std::chrono::system_clock::now();
+        for (int i = 0; i < repeats; ++i) {
+            auto start2 = std::chrono::system_clock::now();
+            T<int> src;
+            for (int j = 0; j < size; ++j) src.insert(start2.time_since_epoch().count() + j);
+
+            T<double> dest = src | ops::map([](int x) {return x / 2.0; });
+        }
+        auto elapsed = std::chrono::system_clock::now() - start;
+        std::cout << "Map     Immutable = " << std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() << std::endl;
+    }
+
+    {
+        auto start = std::chrono::system_clock::now();
+        for (int i = 0; i < repeats; ++i) {
+            auto start2 = std::chrono::system_clock::now();
+            T<int> src;
+            for (int j = 0; j < size; ++j) src.insert(start2.time_since_epoch().count() + j);
+
+            T<double> dest;
+            std::transform(src.begin(), src.end(), std::inserter(dest, dest.end()), [](int x) {return x / 2.0; });
+        }
+        auto elapsed = std::chrono::system_clock::now() - start;
+        std::cout << "Transform         = " << std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() << std::endl;
+    }
+
+    {
+        auto start = std::chrono::system_clock::now();
+        for (int i = 0; i < repeats; ++i) {
+            auto start2 = std::chrono::system_clock::now();
+            T<int> src;
+            for (int j = 0; j < size; ++j) src.insert(start2.time_since_epoch().count() + j);
+
+            src = std::move(src) | ops::map([](int x) {return x / 2; });
+        }
+        auto elapsed = std::chrono::system_clock::now() - start;
+        std::cout << "Map       Mutable = " << std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() << std::endl;
+    }
+
+    {
+        auto start = std::chrono::system_clock::now();
+        for (int i = 0; i < repeats; ++i) {
+            auto start2 = std::chrono::system_clock::now();
+            T<int> src;
+            for (int j = 0; j < size; ++j) src.insert(start2.time_since_epoch().count() + j);
+
+            auto dest = src | ops::filter([](int x) {return x % 2; });
+        }
+        auto elapsed = std::chrono::system_clock::now() - start;
+        std::cout << "Filter  Immutable = " << std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() << std::endl;
+    }
+
+    {
+        auto start = std::chrono::system_clock::now();
+        for (int i = 0; i < repeats; ++i) {
+            auto start2 = std::chrono::system_clock::now();
+            T<int> src;
+            for (int j = 0; j < size; ++j) src.insert(start2.time_since_epoch().count() + j);
+
+            auto dest = src;
+            std::erase_if(dest, [](int x) {return x % 2; });
+        }
+        auto elapsed = std::chrono::system_clock::now() - start;
+        std::cout << "EraseIf Immutable = " << std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() << std::endl;
+    }
+
+    {
+        auto start = std::chrono::system_clock::now();
+        for (int i = 0; i < repeats; ++i) {
+            auto start2 = std::chrono::system_clock::now();
+            T<int> src;
+            for (int j = 0; j < size; ++j) src.insert(start2.time_since_epoch().count() + j);
+
+            src = std::move(src) | ops::filter([](int x) {return x % 2; });
+        }
+        auto elapsed = std::chrono::system_clock::now() - start;
+        std::cout << "Filter    Mutable = " << std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() << std::endl;
+    }
+
+    {
+        auto start = std::chrono::system_clock::now();
+        for (int i = 0; i < repeats; ++i) {
+            auto start2 = std::chrono::system_clock::now();
+            T<int> src;
+            for (int j = 0; j < size; ++j) src.insert(start2.time_since_epoch().count() + j);
+
+            std::erase_if(src, [](int x) {return x % 2; });
+        }
+        auto elapsed = std::chrono::system_clock::now() - start;
+        std::cout << "EraseIf   Mutable = " << std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() << std::endl;
+    }
+}
+
 int main() {
+    std::cout << "Vectors:" << std::endl;
+    vectorsBenchmark();
+    std::cout << "\nSets:" << std::endl;
+    setsBenchmark<std::set>();
+    std::cout << "\nUnordered sets:" << std::endl;
+    setsBenchmark<std::unordered_set>();
+
     std::cout << getInt(42) << std::endl;
     std::cout << testOptional(3) << "; " <<  testOptional(2) << "; " <<  testOptional(std::nullopt) << std::endl;
     { ContainerTester<std::vector<int>> x; }
