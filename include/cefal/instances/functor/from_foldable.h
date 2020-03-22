@@ -31,17 +31,27 @@
 #include "cefal/monoid.h"
 
 #include <algorithm>
+#include <concepts>
 #include <type_traits>
 
 namespace cefal::instances {
 namespace detail {
 template <typename Src, typename Dest>
-concept TransferrableSize = requires(Src src, Dest dest) {
+concept TransferableSize = requires(Src src, Dest dest) {
     dest.reserve(src.size());
 };
 
+// clang-format off
+template <typename Src, typename Func>
+concept SelfTransformable = requires(Src src, Func func, InnerType_T<Src> value) {
+    { func(value) } -> std::same_as<InnerType_T<Src>>;
+    {*src.begin() = value};
+    {std::transform(src.begin(), src.end(), src.begin(), func)};
+};
+// clang-format on
+
 template <typename Dest, typename Src>
-requires TransferrableSize<Src, Dest> void prepareMapDestination(const Src& src, Dest&& dest) {
+requires TransferableSize<Src, Dest> void prepareMapDestination(const Src& src, Dest&& dest) {
     dest.reserve(src.size());
 }
 
@@ -71,7 +81,7 @@ public:
 
     template <typename Input, typename Func>
     // clang-format off
-    requires std::same_as<std::remove_cvref_t<Input>, Src>
+    requires std::same_as<std::remove_cvref_t<Input>, Src> && (!concepts::SingletonEnabledMonoid<Src>)
         // clang-format on
         static auto map(Input&& src, Func&& func) {
         using Dest = WithInnerType_T<Src, std::invoke_result_t<Func, T>>;
@@ -82,17 +92,40 @@ public:
                  });
     }
 
-    template <typename Input, typename Func>
+    // We have SingletonEnabled variant divided into rvalue and lvalue here
+    // to provide optimization for rvalue std vector-like container that is mapped into same type container
+    template <typename Func>
     // clang-format off
-    requires std::same_as<std::remove_cvref_t<Input>, Src> && concepts::SingletonEnabledMonoid<Src>
+    requires concepts::SingletonEnabledMonoid<Src>
         // clang-format on
-        static auto map(Input&& src, Func&& func) {
+        static auto map(const Src& src, Func&& func) {
+        using Dest = WithInnerType_T<Src, std::invoke_result_t<Func, T>>;
+        return src | ops::foldLeft(detail::createMapDestination<Dest>(src), [func = std::forward<Func>(func)](Dest&& l, const T& r) {
+                   return std::move(l) | ops::append(helpers::SingletonFrom<Dest>{func(r)});
+               });
+    }
+
+    template <typename Func>
+    // clang-format off
+    requires concepts::SingletonEnabledMonoid<Src>
+        // clang-format on
+        static auto map(Src&& src, Func&& func) {
         using Dest = WithInnerType_T<Src, std::invoke_result_t<Func, T>>;
         auto dest = detail::createMapDestination<Dest>(src);
-        return std::forward<Input>(src)
-               | ops::foldLeft(std::move(dest), [func = std::forward<Func>(func)]<typename T2>(Dest&& l, T2&& r) {
-                     return std::move(l) | ops::append(helpers::SingletonFrom<Dest>{func(std::forward<T2>(r))});
-                 });
+        return std::move(src) | ops::foldLeft(std::move(dest), [func = std::forward<Func>(func)](Dest&& l, T&& r) {
+                   return std::move(l) | ops::append(helpers::SingletonFrom<Dest>{func(std::move(r))});
+               });
+    }
+
+    // We don't need SingletonEnabledMonoid here, but it makes code easier (no extra negative checks and all that)
+    // Technically it shouldn't occur, because SingletonEnabledMonoid is less strict than SelfTransformable
+    template <typename Func>
+    // clang-format off
+    requires concepts::SingletonEnabledMonoid<Src> && detail::SelfTransformable<Src, Func>
+        // clang-format on
+        static auto map(Src&& src, Func&& func) {
+        std::transform(src.begin(), src.end(), src.begin(), std::forward<Func>(func));
+        return std::move(src);
     }
 };
 } // namespace cefal::instances

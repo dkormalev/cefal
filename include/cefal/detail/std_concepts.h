@@ -54,7 +54,6 @@ concept SetLikeContainer = SingleSocketedStdContainer<C> && requires (C c, Inner
 
 template<typename C>
 concept VectorLikeContainer = SingleSocketedStdContainer<C> && requires (C c, InnerType_T<C> value, size_t size) {
-  c.reserve(size);
   c.push_back(value);
 };
 // clang-format on

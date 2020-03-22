@@ -58,7 +58,61 @@ All concepts are in `cefal::concepts` namespace.
 
 All instances should be implemented in `cefal::instances` namespace.
 
-All operations are in `cefal::ops` namespace.
+All operations are in `cefal::ops` namespace and can be used either through pipe operator or with currying.
+
+## Performance
+No real benchmarks are created yet, but due to it being mostly a wrapper around std or user implementations - overhead is minimal.
+For std::containers and map/filter operations few `non-pure` optimizations also are in place to provide performance similar to using pure std algorithms.
+
+Ranges are not used due to their lack in any compiler at the current moment.
+
+### Benchmarking
+Toy "benchmarks" can be found in `src/dummy.cpp` which can't be used of course as proper measurement, but at least give an idea about performance. They are testing `std::vector<int>`, `std::set<int>` and `std::unordered_set<int>` performance in map/filter operations. All numbers are in milliseconds and is an average across 10 repeats (vectors are of 10kk elements and sets are of 100k elements).
+ * `Transform` - just a `std::transform` to new container, no `reserve` calls
+ * `Transform/reserve` - `std::transform` to new container with `reserve` on destination prior to transforming
+ * `Transform/self` - `std::transform` to same container
+ * `Map Immutable` - `ops::map` from lvalue (through `foldLeft`)
+ * `Map Mutable` -  `ops::map` from rvalue (uses optimization bypassing the `foldLeft`)
+ * `EraseIf Immutable` - container copying and `std::erase_if` on new container
+ * `EraseIf Mutable` - `std::erase_if` on same container
+ * `Filter Immutable` - `ops::filter` from lvalue (through `foldLeft`)
+ * `Filter Mutable` - `ops::filter` from rvalue (uses optimization bypassing the `foldLeft`)
+
+```
+Vectors:
+Transform         = 89
+Map     Immutable = 51
+Transform/reserve = 58
+Map       Mutable = 21
+Transform/self    = 20
+Filter  Immutable = 34
+EraseIf Immutable = 33
+Filter    Mutable = 22
+EraseIf   Mutable = 22
+
+Sets:
+Map     Immutable = 52
+Transform         = 53
+Map       Mutable = 44
+Filter  Immutable = 39
+EraseIf Immutable = 48
+Filter    Mutable = 28
+EraseIf   Mutable = 29
+
+Unordered sets:
+Map     Immutable = 47
+Transform         = 48
+Map       Mutable = 31
+Filter  Immutable = 30
+EraseIf Immutable = 34
+Filter    Mutable = 18
+EraseIf   Mutable = 19
+```
+
+### Observations on benchmark results
+ * Mutable versions are on-par with std implementations
+ * Immutable versions are either on-par or a bit faster (vector mapping and sets filtering) than std implementation
+ * Mutable mapping exists for sets and can be 25% faster (for unordered_sets) than immutable one (std implementation doesn't have it due to limitations how `std::transform` works)
 
 ### Example
 ```cpp

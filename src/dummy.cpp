@@ -164,7 +164,7 @@ void vectorsBenchmark(int repeats = 10, size_t size = 10'000'000) {
             std::transform(src.begin(), src.end(), std::back_inserter(dest), [](int x) {return x / 2.0; });
         }
         auto elapsed = std::chrono::system_clock::now() - start;
-        std::cout << "Transform         = " << std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() << std::endl;
+        std::cout << "Transform         = " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed / repeats).count() << std::endl;
     }
 
     {
@@ -178,7 +178,7 @@ void vectorsBenchmark(int repeats = 10, size_t size = 10'000'000) {
             std::vector<double> dest = src | ops::map([](int x) {return x / 2.0; });
         }
         auto elapsed = std::chrono::system_clock::now() - start;
-        std::cout << "Map     Immutable = " << std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() << std::endl;
+        std::cout << "Map     Immutable = " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed / repeats).count() << std::endl;
     }
 
     {
@@ -194,7 +194,7 @@ void vectorsBenchmark(int repeats = 10, size_t size = 10'000'000) {
             std::transform(src.begin(), src.end(), std::back_inserter(dest), [](int x) {return x / 2.0; });
         }
         auto elapsed = std::chrono::system_clock::now() - start;
-        std::cout << "Transform/reserve = " << std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() << std::endl;
+        std::cout << "Transform/reserve = " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed / repeats).count() << std::endl;
     }
 
     {
@@ -208,7 +208,7 @@ void vectorsBenchmark(int repeats = 10, size_t size = 10'000'000) {
             src = std::move(src) | ops::map([](int x) {return x / 2; });
         }
         auto elapsed = std::chrono::system_clock::now() - start;
-        std::cout << "Map       Mutable = " << std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() << std::endl;
+        std::cout << "Map       Mutable = " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed / repeats).count() << std::endl;
     }
 
     {
@@ -222,7 +222,7 @@ void vectorsBenchmark(int repeats = 10, size_t size = 10'000'000) {
             std::transform(src.begin(), src.end(), src.begin(), [](int x) {return x / 2; });
         }
         auto elapsed = std::chrono::system_clock::now() - start;
-        std::cout << "Transform/self    = " << std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() << std::endl;
+        std::cout << "Transform/self    = " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed / repeats).count() << std::endl;
     }
 
     {
@@ -236,7 +236,7 @@ void vectorsBenchmark(int repeats = 10, size_t size = 10'000'000) {
             auto dest = src | ops::filter([](int x) {return x % 2; });
         }
         auto elapsed = std::chrono::system_clock::now() - start;
-        std::cout << "Filter  Immutable = " << std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() << std::endl;
+        std::cout << "Filter  Immutable = " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed / repeats).count() << std::endl;
     }
 
     {
@@ -248,10 +248,10 @@ void vectorsBenchmark(int repeats = 10, size_t size = 10'000'000) {
             for (int j = 0; j < size; ++j) src.push_back(start2.time_since_epoch().count() + j);
 
             auto dest = src;
-            std::erase_if(dest, [](int x) {return x % 2; });
+            std::erase_if(dest, [](int x) {return !(x % 2); });
         }
         auto elapsed = std::chrono::system_clock::now() - start;
-        std::cout << "EraseIf Immutable = " << std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() << std::endl;
+        std::cout << "EraseIf Immutable = " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed / repeats).count() << std::endl;
     }
 
     {
@@ -265,7 +265,7 @@ void vectorsBenchmark(int repeats = 10, size_t size = 10'000'000) {
             src = std::move(src) | ops::filter([](int x) {return x % 2; });
         }
         auto elapsed = std::chrono::system_clock::now() - start;
-        std::cout << "Filter    Mutable = " << std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() << std::endl;
+        std::cout << "Filter    Mutable = " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed / repeats).count() << std::endl;
     }
 
     {
@@ -276,10 +276,10 @@ void vectorsBenchmark(int repeats = 10, size_t size = 10'000'000) {
             src.reserve(size);
             for (int j = 0; j < size; ++j) src.push_back(start2.time_since_epoch().count() + j);
 
-            std::erase_if(src, [](int x) {return x % 2; });
+            std::erase_if(src, [](int x) {return !(x % 2); });
         }
         auto elapsed = std::chrono::system_clock::now() - start;
-        std::cout << "EraseIf   Mutable = " << std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() << std::endl;
+        std::cout << "EraseIf   Mutable = " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed / repeats).count() << std::endl;
     }
 }
 
@@ -308,7 +308,7 @@ void setsBenchmark(int repeats = 10, size_t size = 100'000) {
             T<double> dest = src | ops::map([](int x) {return x / 2.0; });
         }
         auto elapsed = std::chrono::system_clock::now() - start;
-        std::cout << "Map     Immutable = " << std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() << std::endl;
+        std::cout << "Map     Immutable = " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed / repeats).count() << std::endl;
     }
 
     {
@@ -322,7 +322,7 @@ void setsBenchmark(int repeats = 10, size_t size = 100'000) {
             std::transform(src.begin(), src.end(), std::inserter(dest, dest.end()), [](int x) {return x / 2.0; });
         }
         auto elapsed = std::chrono::system_clock::now() - start;
-        std::cout << "Transform         = " << std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() << std::endl;
+        std::cout << "Transform         = " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed / repeats).count() << std::endl;
     }
 
     {
@@ -335,7 +335,7 @@ void setsBenchmark(int repeats = 10, size_t size = 100'000) {
             src = std::move(src) | ops::map([](int x) {return x / 2; });
         }
         auto elapsed = std::chrono::system_clock::now() - start;
-        std::cout << "Map       Mutable = " << std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() << std::endl;
+        std::cout << "Map       Mutable = " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed / repeats).count() << std::endl;
     }
 
     {
@@ -348,7 +348,7 @@ void setsBenchmark(int repeats = 10, size_t size = 100'000) {
             auto dest = src | ops::filter([](int x) {return x % 2; });
         }
         auto elapsed = std::chrono::system_clock::now() - start;
-        std::cout << "Filter  Immutable = " << std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() << std::endl;
+        std::cout << "Filter  Immutable = " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed / repeats).count() << std::endl;
     }
 
     {
@@ -359,10 +359,10 @@ void setsBenchmark(int repeats = 10, size_t size = 100'000) {
             for (int j = 0; j < size; ++j) src.insert(start2.time_since_epoch().count() + j);
 
             auto dest = src;
-            std::erase_if(dest, [](int x) {return x % 2; });
+            std::erase_if(dest, [](int x) {return !(x % 2); });
         }
         auto elapsed = std::chrono::system_clock::now() - start;
-        std::cout << "EraseIf Immutable = " << std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() << std::endl;
+        std::cout << "EraseIf Immutable = " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed / repeats).count() << std::endl;
     }
 
     {
@@ -375,7 +375,7 @@ void setsBenchmark(int repeats = 10, size_t size = 100'000) {
             src = std::move(src) | ops::filter([](int x) {return x % 2; });
         }
         auto elapsed = std::chrono::system_clock::now() - start;
-        std::cout << "Filter    Mutable = " << std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() << std::endl;
+        std::cout << "Filter    Mutable = " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed / repeats).count() << std::endl;
     }
 
     {
@@ -385,10 +385,10 @@ void setsBenchmark(int repeats = 10, size_t size = 100'000) {
             T<int> src;
             for (int j = 0; j < size; ++j) src.insert(start2.time_since_epoch().count() + j);
 
-            std::erase_if(src, [](int x) {return x % 2; });
+            std::erase_if(src, [](int x) {return !(x % 2); });
         }
         auto elapsed = std::chrono::system_clock::now() - start;
-        std::cout << "EraseIf   Mutable = " << std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() << std::endl;
+        std::cout << "EraseIf   Mutable = " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed / repeats).count() << std::endl;
     }
 }
 

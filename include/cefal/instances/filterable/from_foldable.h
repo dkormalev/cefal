@@ -34,7 +34,19 @@
 #include <algorithm>
 #include <type_traits>
 
+// TODO: These includes shouldn't be here, but for some reason compiler doesn't found erase_if overloads without them here
+// It should be enough to include them in calling unit, but (due to gcc bug?) they are not found. Vector/string/map are visible
+#include <set>
+#include <unordered_set>
+
 namespace cefal::instances {
+namespace detail {
+template <typename Src, typename Func>
+concept SelfErasable = requires(Src src, Func func) {
+    {std::erase_if(src, func)};
+};
+} // namespace detail
+
 template <typename Src>
 // clang-format off
 requires concepts::Foldable<Src> && concepts::Monoid<Src> && (!detail::HasFilterableMethods<Src>)
@@ -57,17 +69,43 @@ public:
                  });
     }
 
-    template <typename Input, typename Func>
+    // We have SingletonEnabled variant divided into rvalue and lvalue here
+    // to provide optimization for rvalue std container
+    template <typename Func>
     // clang-format off
-    requires std::same_as<std::remove_cvref_t<Input>, Src> && concepts::SingletonEnabledMonoid<Src>
+    requires concepts::SingletonEnabledMonoid<Src>
         // clang-format on
-        static auto filter(Input&& src, Func&& func) {
-        return std::forward<Input>(src)
-               | ops::foldLeft(ops::empty<Src>(), [func = std::forward<Func>(func)]<typename T2>(Src&& l, T2&& r) {
-                     if (!func(r))
-                         return std::move(l);
-                     return std::move(l) | ops::append(helpers::SingletonFrom<Src>{std::forward<T2>(r)});
-                 });
+        static auto filter(const Src& src, Func&& func) {
+        using Dest = WithInnerType_T<Src, std::invoke_result_t<Func, T>>;
+        return src | ops::foldLeft(ops::empty<Src>(), [func = std::forward<Func>(func)](Src&& l, const T& r) {
+                   if (!func(r))
+                       return std::move(l);
+                   return std::move(l) | ops::append(helpers::SingletonFrom<Src>{r});
+               });
+    }
+
+    template <typename Func>
+    // clang-format off
+    requires concepts::SingletonEnabledMonoid<Src>
+        // clang-format on
+        static auto filter(Src&& src, Func&& func) {
+        using Dest = WithInnerType_T<Src, std::invoke_result_t<Func, T>>;
+        return std::move(src) | ops::foldLeft(ops::empty<Src>(), [func = std::forward<Func>(func)](Src&& l, T&& r) {
+                   if (!func(r))
+                       return std::move(l);
+                   return std::move(l) | ops::append(helpers::SingletonFrom<Src>{std::move(r)});
+               });
+    }
+
+    // We don't need SingletonEnabledMonoid here, but it makes code easier (no extra negative checks and all that)
+    // Technically it shouldn't occur, because SingletonEnabledMonoid is less strict than SelfTransformable
+    template <typename Func>
+    // clang-format off
+    requires concepts::SingletonEnabledMonoid<Src> && detail::SelfErasable<Src, Func>
+        // clang-format on
+        static auto filter(Src&& src, Func&& func) {
+        std::erase_if(src, [func = std::forward<Func>(func)](const T& r) { return !func(r); });
+        return std::move(src);
     }
 };
 } // namespace cefal::instances
