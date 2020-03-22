@@ -34,16 +34,18 @@
 #include <algorithm>
 #include <type_traits>
 
-// TODO: These includes shouldn't be here, but for some reason compiler doesn't found erase_if overloads without them here
-// It should be enough to include them in calling unit, but (due to gcc bug?) they are not found. Vector/string/map are visible
-#include <set>
-#include <unordered_set>
-
 namespace cefal::instances {
 namespace detail {
 template <typename Src, typename Func>
-concept SelfErasable = requires(Src src, Func func) {
-    {std::erase_if(src, func)};
+concept StdRemoveIfable = requires(Src src, Func func, InnerType_T<Src> value) {
+    {*src.begin() = value};
+    {src.erase(std::remove_if(src.begin(), src.end(), func), src.end())};
+};
+
+template <typename Src>
+concept Erasable = requires(Src src, InnerType_T<Src> value) {
+    {src.erase(value)};
+    {src.erase(src.begin())};
 };
 } // namespace detail
 
@@ -98,13 +100,29 @@ public:
     }
 
     // We don't need SingletonEnabledMonoid here, but it makes code easier (no extra negative checks and all that)
-    // Technically it shouldn't occur, because SingletonEnabledMonoid is less strict than SelfTransformable
+    // Technically it shouldn't occur, because SingletonEnabledMonoid is less strict than StdRemoveIfable
+    // We also can't use std::erase_if here due to it being in multiple headers, so we need an extra overload for set-like containers
     template <typename Func>
     // clang-format off
-    requires concepts::SingletonEnabledMonoid<Src> && detail::SelfErasable<Src, Func>
+    requires concepts::SingletonEnabledMonoid<Src> && detail::StdRemoveIfable<Src, Func>
         // clang-format on
         static auto filter(Src&& src, Func&& func) {
-        std::erase_if(src, [func = std::forward<Func>(func)](const T& r) { return !func(r); });
+        src.erase(std::remove_if(src.begin(), src.end(), [func = std::forward<Func>(func)](const T& r) { return !func(r); }),
+                  src.end());
+        return std::move(src);
+    }
+
+    template <typename Func>
+    // clang-format off
+    requires concepts::SingletonEnabledMonoid<Src> && (!detail::StdRemoveIfable<Src, Func>) && detail::Erasable<Src>
+        // clang-format on
+        static auto filter(Src&& src, Func&& func) {
+        for (auto it = src.begin(); it != src.end();) {
+            if (func(*it))
+                ++it;
+            else
+                it = src.erase(it);
+        }
         return std::move(src);
     }
 };
