@@ -25,8 +25,9 @@
 
 #pragma once
 
-#include "cefal/common.h"
 #include "cefal/detail/std_concepts.h"
+
+#include "cefal/common.h"
 #include "cefal/monoid.h"
 
 #include <type_traits>
@@ -41,6 +42,16 @@ struct SingletonFrom<Src> {
 } // namespace helpers
 
 namespace instances {
+namespace detail {
+template <cefal::detail::Reservable C>
+void reserveContainer(C& c, size_t size) {
+    c.reserve(size);
+}
+template <typename C>
+void reserveContainer(C& c, size_t size) {
+}
+} // namespace detail
+
 template <cefal::detail::VectorLikeContainer Src>
 struct Monoid<Src> {
     static Src empty() { return Src(); }
@@ -51,7 +62,7 @@ struct Monoid<Src> {
         if (!right.size())
             return left;
         Src result;
-        result.reserve(left.size() + right.size());
+        detail::reserveContainer(result, left.size() + right.size());
         result.insert(result.end(), left.begin(), left.end());
         result.insert(result.end(), right.begin(), right.end());
         return result;
@@ -62,7 +73,7 @@ struct Monoid<Src> {
             return right;
         if (!right.size())
             return std::move(left);
-        left.reserve(left.size() + right.size());
+        detail::reserveContainer(left, left.size() + right.size());
         left.insert(left.end(), right.begin(), right.end());
         return std::move(left);
     }
@@ -72,7 +83,7 @@ struct Monoid<Src> {
             return std::move(right);
         if (!right.size())
             return left;
-        right.reserve(left.size() + right.size());
+        detail::reserveContainer(right, left.size() + right.size());
         right.insert(right.begin(), left.begin(), left.end());
         return std::move(right);
     }
@@ -83,11 +94,11 @@ struct Monoid<Src> {
         if (!right.size())
             return std::move(left);
         if (left.size() < right.size()) {
-            right.reserve(left.size() + right.size());
+            detail::reserveContainer(right, left.size() + right.size());
             right.insert(right.begin(), left.begin(), left.end());
             return std::move(right);
         } else {
-            left.reserve(left.size() + right.size());
+            detail::reserveContainer(left, left.size() + right.size());
             left.insert(left.end(), right.begin(), right.end());
             return std::move(left);
         }

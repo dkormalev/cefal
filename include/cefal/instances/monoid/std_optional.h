@@ -44,7 +44,7 @@ struct Monoid<std::optional<M>> {
             return std::forward<T2>(right);
         if (!right)
             return std::forward<T1>(left);
-        return std::forward<T1>(left) | ops::append(std::forward<T2>(right));
+        return *std::forward<T1>(left) | ops::append(*std::forward<T2>(right));
     }
 };
 } // namespace cefal::instances

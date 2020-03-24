@@ -57,6 +57,9 @@ export(EXPORT cefal-targets FILE ${CMAKE_BINARY_DIR}/cefal-targets.cmake NAMESPA
 
 if(CEFAL_BUILD_TESTS)
     message("-- cefal: Building with tests")
+    list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/tests/catch2)
+    include(Catch)
+    include(CTest)
     enable_testing()
     add_subdirectory(tests)
 endif()

@@ -25,8 +25,9 @@
 
 #pragma once
 
-#include "cefal/common.h"
 #include "cefal/detail/std_concepts.h"
+
+#include "cefal/common.h"
 #include "cefal/foldable.h"
 
 #include <numeric>

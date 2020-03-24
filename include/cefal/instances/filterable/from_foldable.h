@@ -25,6 +25,8 @@
 
 #pragma once
 
+#include "cefal/detail/std_concepts.h"
+
 #include "cefal/common.h"
 #include "cefal/filterable.h"
 #include "cefal/foldable.h"
@@ -35,20 +37,6 @@
 #include <type_traits>
 
 namespace cefal::instances {
-namespace detail {
-template <typename Src, typename Func>
-concept StdRemoveIfable = requires(Src src, Func func, InnerType_T<Src> value) {
-    {*src.begin() = value};
-    {src.erase(std::remove_if(src.begin(), src.end(), func), src.end())};
-};
-
-template <typename Src>
-concept Erasable = requires(Src src, InnerType_T<Src> value) {
-    {src.erase(value)};
-    {src.erase(src.begin())};
-};
-} // namespace detail
-
 template <typename Src>
 // clang-format off
 requires concepts::Foldable<Src> && concepts::Monoid<Src> && (!detail::HasFilterableMethods<Src>)
@@ -104,7 +92,7 @@ public:
     // We also can't use std::erase_if here due to it being in multiple headers, so we need an extra overload for set-like containers
     template <typename Func>
     // clang-format off
-    requires concepts::SingletonEnabledMonoid<Src> && detail::StdRemoveIfable<Src, Func>
+    requires concepts::SingletonEnabledMonoid<Src> && cefal::detail::StdRemoveIfable<Src, Func>
         // clang-format on
         static auto filter(Src&& src, Func&& func) {
         src.erase(std::remove_if(src.begin(), src.end(), [func = std::forward<Func>(func)](const T& r) { return !func(r); }),
@@ -114,7 +102,7 @@ public:
 
     template <typename Func>
     // clang-format off
-    requires concepts::SingletonEnabledMonoid<Src> && (!detail::StdRemoveIfable<Src, Func>) && detail::Erasable<Src>
+    requires concepts::SingletonEnabledMonoid<Src> && (!cefal::detail::StdRemoveIfable<Src, Func>) && cefal::detail::Erasable<Src>
         // clang-format on
         static auto filter(Src&& src, Func&& func) {
         for (auto it = src.begin(); it != src.end();) {

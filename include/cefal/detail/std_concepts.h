@@ -25,8 +25,9 @@
 
 #pragma once
 
-#include "cefal/common.h"
 #include "cefal/detail/common_concepts.h"
+
+#include "cefal/common.h"
 
 #include <concepts>
 #include <iterator>
@@ -35,12 +36,12 @@ namespace cefal::detail {
 // clang-format off
 template<typename C>
 concept StdContainer = requires (C c) {
-  typename C::iterator;
-  typename C::value_type;
-  {std::begin(c)} -> std::same_as<typename C::iterator>;
-  {std::end(c)} -> std::same_as<typename C::iterator>;
-  {std::next(std::begin(c))} -> std::same_as<typename C::iterator>;
-  {*std::begin(c)} -> std::convertible_to<typename C::value_type>;
+    typename C::iterator;
+    typename C::value_type;
+    {std::begin(c)} -> std::same_as<typename C::iterator>;
+    {std::end(c)} -> std::same_as<typename C::iterator>;
+    {std::next(std::begin(c))} -> std::same_as<typename C::iterator>;
+    {*std::begin(c)} -> std::convertible_to<typename C::value_type>;
 };
 
 template<typename C>
@@ -48,13 +49,42 @@ concept SingleSocketedStdContainer = SingleSocketed<C> && StdContainer<C>;
 
 template<typename C>
 concept SetLikeContainer = SingleSocketedStdContainer<C> && requires (C c, InnerType_T<C> value) {
-  typename C::node_type;
-  c.insert(value);
+    typename C::node_type;
+    c.insert(value);
 };
 
 template<typename C>
 concept VectorLikeContainer = SingleSocketedStdContainer<C> && requires (C c, InnerType_T<C> value, size_t size) {
-  c.push_back(value);
+    c.push_back(value);
+};
+
+template <typename C>
+concept Reservable = SingleSocketedStdContainer<C> && requires(C c, size_t size) {
+    c.reserve(size);
+};
+
+template <typename Src, typename Dest>
+concept TransferableSize = SingleSocketedStdContainer<Src> && SingleSocketedStdContainer<Dest> && requires(Src src, Dest dest) {
+    dest.reserve(src.size());
+};
+
+template <typename Src, typename Func>
+concept SelfTransformable = SingleSocketedStdContainer<Src> && requires(Src src, Func func, InnerType_T<Src> value) {
+    { func(value) } -> std::same_as<InnerType_T<Src>>;
+    {*src.begin() = value};
+    {std::transform(src.begin(), src.end(), src.begin(), func)};
+};
+
+template <typename Src, typename Func>
+concept StdRemoveIfable = SingleSocketedStdContainer<Src> && requires(Src src, Func func, InnerType_T<Src> value) {
+    {*src.begin() = value};
+    {src.erase(std::remove_if(src.begin(), src.end(), func), src.end())};
+};
+
+template <typename Src>
+concept Erasable = SingleSocketedStdContainer<Src> && requires(Src src, InnerType_T<Src> value) {
+    {src.erase(value)};
+    {src.erase(src.begin())};
 };
 // clang-format on
 } // namespace cefal::detail

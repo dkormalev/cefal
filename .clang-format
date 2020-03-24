@@ -45,12 +45,18 @@ FixNamespaceComments: true
 ForEachMacros: [ foreach, Q_FOREACH, BOOST_FOREACH, forever, Q_FOREVER, QBENCHMARK, QBENCHMARK_ONCE ]
 IncludeBlocks: Regroup
 IncludeCategories:
-    - Regex: '^"gtest.*' # gtest headers
+    - Regex: '^"catch2.*' # catch2 headers
       Priority: 10
     - Regex: '^<.*' # stl/system headers
       Priority: 20
     - Regex: 'cefal/instances/.*' # Cefal instances
+      Priority: 5
+    - Regex: 'cefal/detail/.*' # Cefal other
+      Priority: 3
+    - Regex: 'cefal/cefal' # Cefal main
       Priority: 2
+    - Regex: 'cefal/.*' # Cefal other
+      Priority: 4
     - Regex: '.*' # everything else
       Priority: 1
 IncludeIsMainRegex: '$'

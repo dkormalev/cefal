@@ -25,35 +25,17 @@
 
 #pragma once
 
-#include "cefal/common.h"
-#include "cefal/monoid.h"
-
-#include <concepts>
 #include <string>
-#include <type_traits>
 
-namespace cefal::instances {
+template <typename T>
+T createValue(int seed = 0);
+
 template <>
-struct Monoid<std::string> {
-    static std::string empty() { return {}; }
+int createValue<int>(int seed) {
+    return 10 + seed;
+}
 
-    template <typename T1, typename T2>
-    static std::string append(T1&& left, T2&& right) {
-        static_assert(std::is_same_v<std::remove_cvref_t<T1>, std::string>, "Argument type should be the same as monoid");
-        static_assert(std::is_same_v<std::remove_cvref_t<T2>, std::string>, "Argument type should be the same as monoid");
-        return std::forward<T1>(left) + std::forward<T2>(right);
-    }
-};
-
-template <cefal::detail::Arithmetic T>
-struct Monoid<Sum<T>> {
-    static Sum<T> empty() { return static_cast<T>(0); }
-    static Sum<T> append(Sum<T> left, Sum<T> right) { return left.value + right.value; }
-};
-
-template <cefal::detail::Arithmetic T>
-struct Monoid<Product<T>> {
-    static Product<T> empty() { return static_cast<T>(1); }
-    static Product<T> append(Product<T> left, Product<T> right) { return left.value * right.value; }
-};
-} // namespace cefal::instances
+template <>
+std::string createValue<std::string>(int seed) {
+    return "abc_" + std::to_string(seed);
+}

@@ -25,6 +25,8 @@
 
 #pragma once
 
+#include "cefal/detail/std_concepts.h"
+
 #include "cefal/common.h"
 #include "cefal/foldable.h"
 #include "cefal/functor.h"
@@ -36,27 +38,13 @@
 
 namespace cefal::instances {
 namespace detail {
-template <typename Src, typename Dest>
-concept TransferableSize = requires(Src src, Dest dest) {
-    dest.reserve(src.size());
-};
-
-// clang-format off
-template <typename Src, typename Func>
-concept SelfTransformable = requires(Src src, Func func, InnerType_T<Src> value) {
-    { func(value) } -> std::same_as<InnerType_T<Src>>;
-    {*src.begin() = value};
-    {std::transform(src.begin(), src.end(), src.begin(), func)};
-};
-// clang-format on
-
 template <typename Dest, typename Src>
-requires TransferableSize<Src, Dest> void prepareMapDestination(const Src& src, Dest&& dest) {
+requires cefal::detail::TransferableSize<Src, Dest> void prepareMapDestination(const Src& src, Dest& dest) {
     dest.reserve(src.size());
 }
 
 template <typename Dest, typename Src>
-void prepareMapDestination(const Src& src, Dest&& dest) {
+void prepareMapDestination(const Src& src, Dest& dest) {
 }
 
 template <typename Dest, typename Src>
@@ -121,7 +109,7 @@ public:
     // Technically it shouldn't occur, because SingletonEnabledMonoid is less strict than SelfTransformable
     template <typename Func>
     // clang-format off
-    requires concepts::SingletonEnabledMonoid<Src> && detail::SelfTransformable<Src, Func>
+    requires concepts::SingletonEnabledMonoid<Src> && cefal::detail::SelfTransformable<Src, Func>
         // clang-format on
         static auto map(Src&& src, Func&& func) {
         std::transform(src.begin(), src.end(), src.begin(), std::forward<Func>(func));

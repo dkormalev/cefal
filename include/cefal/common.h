@@ -29,6 +29,10 @@
 #include <utility>
 
 namespace cefal {
+namespace detail {
+template <typename T>
+concept Arithmetic = std::integral<T> || std::floating_point<T>;
+}
 template <typename...>
 struct InnerType;
 template <template <typename...> typename C, typename T, typename... Ts>
@@ -47,14 +51,14 @@ struct WithInnerType<C<T, Ts...>, NewT> {
 template <typename... Ts>
 using WithInnerType_T = WithInnerType<Ts...>::type;
 
-template <std::integral T>
+template <detail::Arithmetic T>
 struct Sum {
     Sum(T x = T()) : value(x) {}
     T value;
     operator T() const { return value; }
 };
 
-template <std::integral T>
+template <detail::Arithmetic T>
 struct Product {
     Product(T x = T()) : value(x) {}
     T value;
