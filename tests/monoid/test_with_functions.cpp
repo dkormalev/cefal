@@ -75,6 +75,7 @@ TEST_CASE("ops::append() - RValue") {
         CHECK(result.value == 42);
     }
     CHECK(Counter::created() == 2);
+    CHECK(Counter::copied() == 0);
     CHECK(Counter::moved() == 2);
     CHECK(Counter::customCount() == 1);
     CHECK(Counter::custom("rvalue_append") == 1);
@@ -93,6 +94,7 @@ TEST_CASE("ops::append() - LValue") {
         CHECK(result.value == 42);
     }
     CHECK(Counter::created() == 3);
+    CHECK(Counter::copied() == 1);
     CHECK(Counter::customCount() == 1);
     CHECK(Counter::custom("lvalue_append") == 1);
 }
