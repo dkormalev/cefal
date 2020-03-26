@@ -62,4 +62,11 @@ if(CEFAL_BUILD_TESTS)
     include(CTest)
     enable_testing()
     add_subdirectory(tests)
+
+    add_custom_target(with-test
+      COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --parallel 8
+      COMMAND ${CMAKE_COMMAND} -E env CTEST_OUTPUT_ON_FAILURE=1 ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target test
+      USES_TERMINAL
+    )
 endif()
+
