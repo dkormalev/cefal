@@ -20,3 +20,7 @@ cefal_test(monoid std_containers)
 
 cefal_test(foldable with_functions)
 cefal_test(foldable std_containers)
+
+cefal_test(functor from_foldable)
+cefal_test(functor std_optional)
+cefal_test(functor with_functions)

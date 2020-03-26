@@ -76,7 +76,7 @@ public:
         auto dest = detail::createMapDestination<Dest>(src);
         return std::forward<Input>(src)
                | ops::foldLeft(std::move(dest), [func = std::forward<Func>(func)]<typename T2>(Dest&& l, T2&& r) {
-                     return std::move(l) | ops::append(unit(func(std::forward<T2>(r))));
+                     return std::move(l) | ops::append(ops::unit<Dest>(func(std::forward<T2>(r))));
                  });
     }
 

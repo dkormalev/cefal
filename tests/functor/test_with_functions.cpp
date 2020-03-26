@@ -27,7 +27,7 @@
 
 #include "cefal/cefal"
 
-#include "cefal/instances/foldable/with_functions.h"
+#include "cefal/instances/functor/with_functions.h"
 
 #include "catch2/catch.hpp"
 
@@ -36,18 +36,21 @@
 using namespace cefal;
 
 struct WithFunctions : public Counter {
-    WithFunctions() : Counter() {}
     WithFunctions(int value) : Counter(), value(value) {}
     int value = 0;
-    template <typename Result, typename Func>
-    Result foldLeft(Result&& init, Func&& f) const& {
-        addCustom("lvalue_foldLeft");
-        return f(init, value);
+    static WithFunctions unit(int x) {
+        addCustom("unit");
+        return WithFunctions(x);
     }
-    template <typename Result, typename Func>
-    Result foldLeft(Result&& init, Func&& f) && {
-        addCustom("rvalue_foldLeft");
-        return f(init, std::move(value));
+    template <typename Func>
+    auto map(Func&& f) const& {
+        addCustom("lvalue_map");
+        return WithFunctions(f(value));
+    }
+    template <typename Func>
+    auto map(Func&& f) && {
+        addCustom("rvalue_map");
+        return WithFunctions(f(std::move(value)));
     }
 };
 
@@ -64,54 +67,75 @@ struct WithInnerType<WithFunctions, T> {
 
 template <typename T>
 struct TemplatedWithFunctions : public Counter {
-    TemplatedWithFunctions() : Counter() {}
     TemplatedWithFunctions(T value) : Counter(), value(value) {}
     T value = 0;
-    template <typename Result, typename Func>
-    Result foldLeft(Result&& init, Func&& f) const& {
-        addCustom("lvalue_foldLeft");
-        return f(std::move(init), value);
+    static TemplatedWithFunctions unit(T x) {
+        addCustom("unit");
+        return TemplatedWithFunctions(x);
     }
-    template <typename Result, typename Func>
-    Result foldLeft(Result&& init, Func&& f) && {
-        addCustom("rvalue_foldLeft");
-        return f(std::move(init), std::move(value));
+    template <typename Func>
+    auto map(Func&& f) const& {
+        addCustom("lvalue_map");
+        return TemplatedWithFunctions<std::invoke_result_t<Func, T>>(f(value));
+    }
+    template <typename Func>
+    auto map(Func&& f) && {
+        addCustom("rvalue_map");
+        return TemplatedWithFunctions<std::invoke_result_t<Func, T>>(f(std::move(value)));
     }
 };
 
-TEMPLATE_TEST_CASE("ops::foldLeft() - RValue", "", WithFunctions, TemplatedWithFunctions<int>) {
+TEMPLATE_TEST_CASE("ops::unit()", "", WithFunctions, TemplatedWithFunctions<int>) {
     Counter::reset();
-    auto folder = [](double a, int x) -> double { return a + x; };
-    SECTION("Pipe") {
-        double result = TestType(4) | ops::foldLeft(5.0, folder);
-        CHECK(result == Approx(9.0));
-    }
-    SECTION("Curried") {
-        double result = ops::foldLeft(5.0, folder)(TestType(4));
-        CHECK(result == Approx(9.0));
-    }
+    TestType result = ops::unit<TestType>(42);
+    CHECK(result.value == 42);
     CHECK(Counter::created() == 1);
-    CHECK(Counter::copied() == 0);
-    CHECK(Counter::moved() == 0);
     CHECK(Counter::customCount() == 1);
-    CHECK(Counter::custom("rvalue_foldLeft") == 1);
+    CHECK(Counter::custom("unit") == 1);
 }
 
-TEMPLATE_TEST_CASE("ops::foldLeft() - LValue", "", WithFunctions, TemplatedWithFunctions<int>) {
+TEST_CASE("ops::unit() - TemplatedWithFunctions") {
     Counter::reset();
-    const auto a = TestType(4);
-    auto folder = [](double a, int x) -> double { return a + x; };
+    TemplatedWithFunctions<int> result = ops::unit<TemplatedWithFunctions>(42);
+    CHECK(result.value == 42);
+    CHECK(Counter::created() == 1);
+    CHECK(Counter::customCount() == 1);
+    CHECK(Counter::custom("unit") == 1);
+}
+
+TEMPLATE_TEST_CASE("ops::map() - RValue", "", WithFunctions, TemplatedWithFunctions<int>) {
+    Counter::reset();
+    auto func = [](int x) -> double { return x * 2; };
     SECTION("Pipe") {
-        double result = a | ops::foldLeft(5.0, folder);
-        CHECK(result == Approx(9.0));
+        WithInnerType_T<TestType, double> result = TestType(4) | ops::map(func);
+        CHECK(result.value == Approx(8.0));
     }
     SECTION("Curried") {
-        double result = ops::foldLeft(5.0, folder)(a);
-        CHECK(result == Approx(9.0));
+        WithInnerType_T<TestType, double> result = ops::map(func)(TestType(4));
+        CHECK(result.value == Approx(8.0));
     }
-    CHECK(Counter::created() == 1);
+    CHECK(Counter::created() == 2);
     CHECK(Counter::copied() == 0);
     CHECK(Counter::moved() == 0);
     CHECK(Counter::customCount() == 1);
-    CHECK(Counter::custom("lvalue_foldLeft") == 1);
+    CHECK(Counter::custom("rvalue_map") == 1);
+}
+
+TEMPLATE_TEST_CASE("ops::map() - LValue", "", WithFunctions, TemplatedWithFunctions<int>) {
+    Counter::reset();
+    const auto a = TestType(4);
+    auto func = [](int x) -> double { return x * 2; };
+    SECTION("Pipe") {
+        WithInnerType_T<TestType, double> result = a | ops::map(func);
+        CHECK(result.value == Approx(8.0));
+    }
+    SECTION("Curried") {
+        WithInnerType_T<TestType, double> result = ops::map(func)(a);
+        CHECK(result.value == Approx(8.0));
+    }
+    CHECK(Counter::created() == 2);
+    CHECK(Counter::copied() == 0);
+    CHECK(Counter::moved() == 0);
+    CHECK(Counter::customCount() == 1);
+    CHECK(Counter::custom("lvalue_map") == 1);
 }
