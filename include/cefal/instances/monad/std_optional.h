@@ -28,6 +28,8 @@
 #include "cefal/common.h"
 #include "cefal/monad.h"
 
+#include "cefal/instances/functor/std_optional.h"
+
 #include <algorithm>
 #include <optional>
 #include <type_traits>

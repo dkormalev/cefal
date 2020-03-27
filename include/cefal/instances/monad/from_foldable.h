@@ -30,6 +30,8 @@
 #include "cefal/monad.h"
 #include "cefal/monoid.h"
 
+#include "cefal/instances/functor/from_foldable.h"
+
 #include <algorithm>
 #include <type_traits>
 

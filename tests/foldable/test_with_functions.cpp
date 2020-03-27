@@ -51,6 +51,22 @@ struct WithFunctions : public Counter {
     }
 };
 
+struct with_functions : public Counter {
+    with_functions() : Counter() {}
+    with_functions(int value) : Counter(), value(value) {}
+    int value = 0;
+    template <typename Result, typename Func>
+    Result fold_left(Result&& init, Func&& f) const& {
+        addCustom("lvalue_foldLeft");
+        return f(init, value);
+    }
+    template <typename Result, typename Func>
+    Result fold_left(Result&& init, Func&& f) && {
+        addCustom("rvalue_foldLeft");
+        return f(init, std::move(value));
+    }
+};
+
 namespace cefal {
 template <>
 struct InnerType<WithFunctions> {
@@ -59,6 +75,15 @@ struct InnerType<WithFunctions> {
 template <typename T>
 struct WithInnerType<WithFunctions, T> {
     using type = WithFunctions;
+};
+
+template <>
+struct InnerType<with_functions> {
+    using type = int;
+};
+template <typename T>
+struct WithInnerType<with_functions, T> {
+    using type = with_functions;
 };
 } // namespace cefal
 
@@ -79,7 +104,7 @@ struct TemplatedWithFunctions : public Counter {
     }
 };
 
-TEMPLATE_TEST_CASE("ops::foldLeft() - RValue", "", WithFunctions, TemplatedWithFunctions<int>) {
+TEMPLATE_TEST_CASE("ops::foldLeft() - RValue", "", WithFunctions, with_functions, TemplatedWithFunctions<int>) {
     Counter::reset();
     auto folder = [](double a, int x) -> double { return a + x; };
     SECTION("Pipe") {
@@ -97,7 +122,7 @@ TEMPLATE_TEST_CASE("ops::foldLeft() - RValue", "", WithFunctions, TemplatedWithF
     CHECK(Counter::custom("rvalue_foldLeft") == 1);
 }
 
-TEMPLATE_TEST_CASE("ops::foldLeft() - LValue", "", WithFunctions, TemplatedWithFunctions<int>) {
+TEMPLATE_TEST_CASE("ops::foldLeft() - LValue", "", WithFunctions, with_functions, TemplatedWithFunctions<int>) {
     Counter::reset();
     const auto a = TestType(4);
     auto folder = [](double a, int x) -> double { return a + x; };

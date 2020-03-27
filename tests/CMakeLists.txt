@@ -24,3 +24,7 @@ cefal_test(foldable std_containers)
 cefal_test(functor from_foldable)
 cefal_test(functor std_optional)
 cefal_test(functor with_functions)
+
+cefal_test(monad from_foldable)
+cefal_test(monad std_optional)
+cefal_test(monad with_functions)
