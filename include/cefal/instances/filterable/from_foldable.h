@@ -105,7 +105,7 @@ public:
     requires concepts::SingletonEnabledMonoid<Src> && (!cefal::detail::StdRemoveIfable<Src, Func>) && cefal::detail::Erasable<Src>
         // clang-format on
         static auto filter(Src&& src, Func&& func) {
-        for (auto it = src.begin(); it != src.end();) {
+        for (auto it = src.begin(), end = src.end(); it != end;) {
             if (func(*it))
                 ++it;
             else

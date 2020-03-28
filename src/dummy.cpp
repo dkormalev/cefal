@@ -14,11 +14,22 @@
 #include "cefal/instances/monad/with_functions.h"
 #include "cefal/instances/monad/std_optional.h"
 
+#include "tests/counter.h"
+
 #include <iostream>
 #include <set>
 #include <unordered_set>
 #include <vector>
 #include <chrono>
+
+
+std::atomic_uint64_t Counter::_created{0};
+std::atomic_uint64_t Counter::_copied{0};
+std::atomic_uint64_t Counter::_moved{0};
+std::atomic_uint64_t Counter::_deleted{0};
+
+std::mutex Counter::customMutex{};
+std::unordered_map<std::string, uint64_t> Counter::_custom{};
 
 using namespace cefal;
 
@@ -135,165 +146,205 @@ struct ContainerTester {
     }
 };
 
+int storage = 0;
+
+template<typename InnerSrc, typename InnerDest>
 void vectorsBenchmark(int repeats = 10, size_t size = 10'000'000) {
     {
         auto start = std::chrono::system_clock::now();
         for (int i = 0; i < repeats; ++i) {
             auto start2 = std::chrono::system_clock::now();
-            std::vector<int> src;
+            std::vector<InnerSrc> src;
             src.reserve(size);
             for (int j = 0; j < size; ++j) src.push_back(start2.time_since_epoch().count() + j);
 
-            std::vector<double> dest;
+            std::vector<InnerDest> dest;
             dest.reserve(size);
-            std::transform(src.begin(), src.end(), std::back_inserter(dest), [](int x) {return x / 2.0; });
+            std::transform(src.begin(), src.end(), std::back_inserter(dest), [](const InnerSrc& x) -> InnerDest {return x / 2.0; });
+            storage = *src.begin();
         }
         auto elapsed = std::chrono::system_clock::now() - start;
     }
 
+    Counter::reset();
     {
         auto start = std::chrono::system_clock::now();
         for (int i = 0; i < repeats; ++i) {
             auto start2 = std::chrono::system_clock::now();
-            std::vector<int> src;
+            std::vector<InnerSrc> src;
             src.reserve(size);
             for (int j = 0; j < size; ++j) src.push_back(start2.time_since_epoch().count() + j);
 
-            std::vector<double> dest;
-            // dest.reserve(size);
-            std::transform(src.begin(), src.end(), std::back_inserter(dest), [](int x) {return x / 2.0; });
+            std::vector<InnerDest> dest;
+            std::transform(src.begin(), src.end(), std::back_inserter(dest), [](const InnerSrc& x) -> InnerDest {return x / 2.0; });
+            storage = *dest.begin();
         }
         auto elapsed = std::chrono::system_clock::now() - start;
         std::cout << "Transform         = " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed / repeats).count() << std::endl;
     }
+    // std::cout << "N: " << Counter::created() << "; C: " << Counter::copied() << "; M: " << Counter::moved() << std::endl;
+    // Counter::reset();
+    // std::cout << storage << std::endl;
 
     {
         auto start = std::chrono::system_clock::now();
         for (int i = 0; i < repeats; ++i) {
             auto start2 = std::chrono::system_clock::now();
-            std::vector<int> src;
+            std::vector<InnerSrc> src;
             src.reserve(size);
             for (int j = 0; j < size; ++j) src.push_back(start2.time_since_epoch().count() + j);
 
-            std::vector<double> dest = src | ops::map([](int x) {return x / 2.0; });
+            std::vector<InnerDest> dest = src | ops::map([](const InnerSrc& x) -> InnerDest {return x / 2.0; });
+            storage = *dest.begin();
         }
         auto elapsed = std::chrono::system_clock::now() - start;
         std::cout << "Map     Immutable = " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed / repeats).count() << std::endl;
     }
+    // std::cout << "N: " << Counter::created() << "; C: " << Counter::copied() << "; M: " << Counter::moved() << std::endl;
+    // Counter::reset();
+    // std::cout << storage << std::endl;
 
     {
         auto start = std::chrono::system_clock::now();
         for (int i = 0; i < repeats; ++i) {
             auto start2 = std::chrono::system_clock::now();
-            std::vector<int> src;
+            std::vector<InnerSrc> src;
             src.reserve(size);
             for (int j = 0; j < size; ++j) src.push_back(start2.time_since_epoch().count() + j);
 
-            std::vector<double> dest;
+            std::vector<InnerDest> dest;
             dest.reserve(size);
-            std::transform(src.begin(), src.end(), std::back_inserter(dest), [](int x) {return x / 2.0; });
+            std::transform(src.begin(), src.end(), std::back_inserter(dest), [](const InnerSrc& x) -> InnerDest {return x / 2.0; });
+            storage = *dest.begin();
         }
         auto elapsed = std::chrono::system_clock::now() - start;
         std::cout << "Transform/reserve = " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed / repeats).count() << std::endl;
     }
+    // std::cout << "N: " << Counter::created() << "; C: " << Counter::copied() << "; M: " << Counter::moved() << std::endl;
+    // Counter::reset();
+    // std::cout << storage << std::endl;
 
     {
         auto start = std::chrono::system_clock::now();
         for (int i = 0; i < repeats; ++i) {
             auto start2 = std::chrono::system_clock::now();
-            std::vector<int> src;
+            std::vector<InnerSrc> src;
             src.reserve(size);
             for (int j = 0; j < size; ++j) src.push_back(start2.time_since_epoch().count() + j);
 
-            src = std::move(src) | ops::map([](int x) {return x / 2; });
+            src = std::move(src) | ops::map([](InnerSrc&& x) {return std::move(x) / 2; });
+            storage = *src.begin();
         }
         auto elapsed = std::chrono::system_clock::now() - start;
         std::cout << "Map       Mutable = " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed / repeats).count() << std::endl;
     }
+    // std::cout << "N: " << Counter::created() << "; C: " << Counter::copied() << "; M: " << Counter::moved() << std::endl;
+    // Counter::reset();
+    // std::cout << storage << std::endl;
 
     {
         auto start = std::chrono::system_clock::now();
         for (int i = 0; i < repeats; ++i) {
             auto start2 = std::chrono::system_clock::now();
-            std::vector<int> src;
+            std::vector<InnerSrc> src;
             src.reserve(size);
             for (int j = 0; j < size; ++j) src.push_back(start2.time_since_epoch().count() + j);
 
-            std::transform(src.begin(), src.end(), src.begin(), [](int x) {return x / 2; });
+            std::transform(src.begin(), src.end(), src.begin(), [](const InnerSrc& x) {return x / 2; });
+            storage = *src.begin();
         }
         auto elapsed = std::chrono::system_clock::now() - start;
         std::cout << "Transform/self    = " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed / repeats).count() << std::endl;
     }
+    // std::cout << "N: " << Counter::created() << "; C: " << Counter::copied() << "; M: " << Counter::moved() << std::endl;
+    // Counter::reset();
+    // std::cout << storage << std::endl;
 
     {
         auto start = std::chrono::system_clock::now();
         for (int i = 0; i < repeats; ++i) {
             auto start2 = std::chrono::system_clock::now();
-            std::vector<int> src;
+            std::vector<InnerSrc> src;
             src.reserve(size);
             for (int j = 0; j < size; ++j) src.push_back(start2.time_since_epoch().count() + j);
 
-            auto dest = src | ops::filter([](int x) {return x % 2; });
+            auto dest = src | ops::filter([](const InnerSrc& x) {return x % 2; });
+            storage = *dest.begin();
         }
         auto elapsed = std::chrono::system_clock::now() - start;
         std::cout << "Filter  Immutable = " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed / repeats).count() << std::endl;
     }
+    // std::cout << "N: " << Counter::created() << "; C: " << Counter::copied() << "; M: " << Counter::moved() << std::endl;
+    // Counter::reset();
+    // std::cout << storage << std::endl;
 
     {
         auto start = std::chrono::system_clock::now();
         for (int i = 0; i < repeats; ++i) {
             auto start2 = std::chrono::system_clock::now();
-            std::vector<int> src;
+            std::vector<InnerSrc> src;
             src.reserve(size);
             for (int j = 0; j < size; ++j) src.push_back(start2.time_since_epoch().count() + j);
 
             auto dest = src;
-            std::erase_if(dest, [](int x) {return !(x % 2); });
+            std::erase_if(dest, [](const InnerSrc& x) {return !(x % 2); });
+            storage = *dest.begin();
         }
         auto elapsed = std::chrono::system_clock::now() - start;
         std::cout << "EraseIf Immutable = " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed / repeats).count() << std::endl;
     }
+    // std::cout << "N: " << Counter::created() << "; C: " << Counter::copied() << "; M: " << Counter::moved() << std::endl;
+    // Counter::reset();
+    // std::cout << storage << std::endl;
 
     {
         auto start = std::chrono::system_clock::now();
         for (int i = 0; i < repeats; ++i) {
             auto start2 = std::chrono::system_clock::now();
-            std::vector<int> src;
+            std::vector<InnerSrc> src;
             src.reserve(size);
             for (int j = 0; j < size; ++j) src.push_back(start2.time_since_epoch().count() + j);
 
-            src = std::move(src) | ops::filter([](int x) {return x % 2; });
+            src = std::move(src) | ops::filter([](const InnerSrc& x) {return x % 2; });
+            storage = *src.begin();
         }
         auto elapsed = std::chrono::system_clock::now() - start;
         std::cout << "Filter    Mutable = " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed / repeats).count() << std::endl;
     }
+    // std::cout << "N: " << Counter::created() << "; C: " << Counter::copied() << "; M: " << Counter::moved() << std::endl;
+    // Counter::reset();
+    // std::cout << storage << std::endl;
 
     {
         auto start = std::chrono::system_clock::now();
         for (int i = 0; i < repeats; ++i) {
             auto start2 = std::chrono::system_clock::now();
-            std::vector<int> src;
+            std::vector<InnerSrc> src;
             src.reserve(size);
             for (int j = 0; j < size; ++j) src.push_back(start2.time_since_epoch().count() + j);
 
-            std::erase_if(src, [](int x) {return !(x % 2); });
+            std::erase_if(src, [](const InnerSrc& x) {return !(x % 2); });
+            storage = *src.begin();
         }
         auto elapsed = std::chrono::system_clock::now() - start;
         std::cout << "EraseIf   Mutable = " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed / repeats).count() << std::endl;
     }
+    // std::cout << "N: " << Counter::created() << "; C: " << Counter::copied() << "; M: " << Counter::moved() << std::endl;
+    // Counter::reset();
+    // std::cout << storage << std::endl;
 }
 
-template<template <typename...> typename T>
+template<template <typename...> typename T, typename InnerSrc, typename InnerDest>
 void setsBenchmark(int repeats = 10, size_t size = 100'000) {
     {
         auto start = std::chrono::system_clock::now();
         for (int i = 0; i < repeats; ++i) {
             auto start2 = std::chrono::system_clock::now();
-            T<int> src;
+            T<InnerSrc> src;
             for (int j = 0; j < size; ++j) src.insert(start2.time_since_epoch().count() + j);
 
-            T<double> dest;
-            std::transform(src.begin(), src.end(), std::inserter(dest, dest.end()), [](int x) {return x / 2.0; });
+            T<InnerDest> dest;
+            std::transform(src.begin(), src.end(), std::inserter(dest, dest.end()), [](const InnerSrc& x) -> InnerDest {return x / 2.0; });
         }
         auto elapsed = std::chrono::system_clock::now() - start;
     }
@@ -302,10 +353,10 @@ void setsBenchmark(int repeats = 10, size_t size = 100'000) {
         auto start = std::chrono::system_clock::now();
         for (int i = 0; i < repeats; ++i) {
             auto start2 = std::chrono::system_clock::now();
-            T<int> src;
+            T<InnerSrc> src;
             for (int j = 0; j < size; ++j) src.insert(start2.time_since_epoch().count() + j);
 
-            T<double> dest = src | ops::map([](int x) {return x / 2.0; });
+            T<InnerDest> dest = src | ops::map([](const InnerSrc& x) -> InnerDest {return x / 2.0; });
         }
         auto elapsed = std::chrono::system_clock::now() - start;
         std::cout << "Map     Immutable = " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed / repeats).count() << std::endl;
@@ -315,11 +366,11 @@ void setsBenchmark(int repeats = 10, size_t size = 100'000) {
         auto start = std::chrono::system_clock::now();
         for (int i = 0; i < repeats; ++i) {
             auto start2 = std::chrono::system_clock::now();
-            T<int> src;
+            T<InnerSrc> src;
             for (int j = 0; j < size; ++j) src.insert(start2.time_since_epoch().count() + j);
 
-            T<double> dest;
-            std::transform(src.begin(), src.end(), std::inserter(dest, dest.end()), [](int x) {return x / 2.0; });
+            T<InnerDest> dest;
+            std::transform(src.begin(), src.end(), std::inserter(dest, dest.end()), [](const InnerSrc& x) -> InnerDest {return x / 2.0; });
         }
         auto elapsed = std::chrono::system_clock::now() - start;
         std::cout << "Transform         = " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed / repeats).count() << std::endl;
@@ -329,10 +380,10 @@ void setsBenchmark(int repeats = 10, size_t size = 100'000) {
         auto start = std::chrono::system_clock::now();
         for (int i = 0; i < repeats; ++i) {
             auto start2 = std::chrono::system_clock::now();
-            T<int> src;
+            T<InnerSrc> src;
             for (int j = 0; j < size; ++j) src.insert(start2.time_since_epoch().count() + j);
 
-            src = std::move(src) | ops::map([](int x) {return x / 2; });
+            src = std::move(src) | ops::map([](InnerSrc&& x) {return std::move(x) / 2; });
         }
         auto elapsed = std::chrono::system_clock::now() - start;
         std::cout << "Map       Mutable = " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed / repeats).count() << std::endl;
@@ -342,10 +393,10 @@ void setsBenchmark(int repeats = 10, size_t size = 100'000) {
         auto start = std::chrono::system_clock::now();
         for (int i = 0; i < repeats; ++i) {
             auto start2 = std::chrono::system_clock::now();
-            T<int> src;
+            T<InnerSrc> src;
             for (int j = 0; j < size; ++j) src.insert(start2.time_since_epoch().count() + j);
 
-            auto dest = src | ops::filter([](int x) {return x % 2; });
+            auto dest = src | ops::filter([](const InnerSrc& x) {return x % 2; });
         }
         auto elapsed = std::chrono::system_clock::now() - start;
         std::cout << "Filter  Immutable = " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed / repeats).count() << std::endl;
@@ -355,11 +406,11 @@ void setsBenchmark(int repeats = 10, size_t size = 100'000) {
         auto start = std::chrono::system_clock::now();
         for (int i = 0; i < repeats; ++i) {
             auto start2 = std::chrono::system_clock::now();
-            T<int> src;
+            T<InnerSrc> src;
             for (int j = 0; j < size; ++j) src.insert(start2.time_since_epoch().count() + j);
 
             auto dest = src;
-            std::erase_if(dest, [](int x) {return !(x % 2); });
+            std::erase_if(dest, [](const InnerSrc& x) {return !(x % 2); });
         }
         auto elapsed = std::chrono::system_clock::now() - start;
         std::cout << "EraseIf Immutable = " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed / repeats).count() << std::endl;
@@ -369,10 +420,10 @@ void setsBenchmark(int repeats = 10, size_t size = 100'000) {
         auto start = std::chrono::system_clock::now();
         for (int i = 0; i < repeats; ++i) {
             auto start2 = std::chrono::system_clock::now();
-            T<int> src;
+            T<InnerSrc> src;
             for (int j = 0; j < size; ++j) src.insert(start2.time_since_epoch().count() + j);
 
-            src = std::move(src) | ops::filter([](int x) {return x % 2; });
+            src = std::move(src) | ops::filter([](const InnerSrc& x) {return x % 2; });
         }
         auto elapsed = std::chrono::system_clock::now() - start;
         std::cout << "Filter    Mutable = " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed / repeats).count() << std::endl;
@@ -382,23 +433,146 @@ void setsBenchmark(int repeats = 10, size_t size = 100'000) {
         auto start = std::chrono::system_clock::now();
         for (int i = 0; i < repeats; ++i) {
             auto start2 = std::chrono::system_clock::now();
-            T<int> src;
+            T<InnerSrc> src;
             for (int j = 0; j < size; ++j) src.insert(start2.time_since_epoch().count() + j);
 
-            std::erase_if(src, [](int x) {return !(x % 2); });
+            std::erase_if(src, [](const InnerSrc& x) {return !(x % 2); });
         }
         auto elapsed = std::chrono::system_clock::now() - start;
         std::cout << "EraseIf   Mutable = " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed / repeats).count() << std::endl;
     }
 }
 
+struct HeavyPayload : Counter {
+    uint64_t unused[100];
+};
+
+template <typename T>
+struct Heavy {
+    Heavy(T x) : value(std::move(x)) {}
+    Heavy(T x, HeavyPayload payload) : value(std::move(x)), payload(std::move(payload)) {}
+    Heavy(const Heavy&) = default;
+    Heavy(Heavy&&) = default;
+    Heavy& operator=(const Heavy&) = default;
+    Heavy& operator=(Heavy&&) = default;
+    ~Heavy() = default;
+
+    operator T() const {
+        return value;
+    }
+
+    template <typename U>
+    bool operator%(U&& other) const { return value % other; }
+
+    template <typename U>
+    Heavy<std::remove_cvref_t<U>> operator/(U&& other) const& { return Heavy<std::remove_cvref_t<U>>(value / other); }
+
+    template <typename U>
+    Heavy<std::remove_cvref_t<U>> operator/(U&& other) && {
+        if constexpr (std::is_same_v<std::remove_cvref_t<U>, T>) {
+            value /= other;
+            return std::move(*this);
+        } else {
+            return Heavy<std::remove_cvref_t<U>>(value / other, std::move(payload));
+        }
+    }
+
+    auto operator<=> (const Heavy<T>& other) const { return value <=> other.value; }
+    bool operator== (const Heavy<T>& other) const { return std::abs(value - other.value) < 0.0001; }
+
+    HeavyPayload payload;
+    T value = T();
+};
+
+
+template <typename T>
+struct Expensive {
+    Expensive(T x) : value(std::move(x)), payload(new char[102400]) {}
+    Expensive(T x, char* payload) : value(std::move(x)), payload(payload) {}
+    Expensive(const Expensive& other) {
+        payload = new char[102400];
+        value = other.value;
+    }
+    Expensive(Expensive&& other) {
+        payload = other.payload;
+        value = std::move(other.value);
+        other.payload = 0;
+    }
+    Expensive& operator=(const Expensive& other) {
+        payload = new char[102400];
+        value = other.value;
+        return *this;
+    }
+    Expensive& operator=(Expensive&& other) {
+        payload = other.payload;
+        value = std::move(other.value);
+        other.payload = 0;
+        return *this;
+    }
+    ~Expensive() {delete[] payload;}
+
+    operator T() const {
+        return value;
+    }
+
+    template <typename U>
+    bool operator%(U&& other) const { return value % other; }
+
+    template <typename U>
+    Expensive<std::remove_cvref_t<U>> operator/(U&& other) const& { return Expensive<std::remove_cvref_t<U>>(value / other); }
+
+    template <typename U>
+    Expensive<std::remove_cvref_t<U>> operator/(U&& other) && {
+        if constexpr (std::is_same_v<std::remove_cvref_t<U>, T>) {
+            value /= other;
+            return std::move(*this);
+        } else {
+            auto result = Expensive<std::remove_cvref_t<U>>(value / other, std::move(payload));
+            payload = 0;
+            return result;
+        }
+    }
+
+    auto operator<=> (const Expensive<T>& other) const { return value <=> other.value; }
+    bool operator== (const Expensive<T>& other) const { return std::abs(value - other.value) < 0.0001; }
+
+    char* payload;
+    T value = T();
+};
+
+namespace std {
+    template<typename T>
+    struct hash<Heavy<T>> {
+        size_t operator()(const Heavy<T>& x) const { return std::hash<T>()(x.value); }
+    };
+
+    template<typename T>
+    struct hash<Expensive<T>> {
+        size_t operator()(const Expensive<T>& x) const { return std::hash<T>()(x.value); }
+    };
+}
+
 int main() {
-    std::cout << "Vectors:" << std::endl;
-    vectorsBenchmark();
-    std::cout << "\nSets:" << std::endl;
-    setsBenchmark<std::set>();
-    std::cout << "\nUnordered sets:" << std::endl;
-    setsBenchmark<std::unordered_set>();
+    std::cout << "\nstd::vector<int>:" << std::endl;
+    vectorsBenchmark<int, double>(10, 10'000'000);
+    std::cout << "\nstd::set<int>:" << std::endl;
+    setsBenchmark<std::set, int, double>(10, 1'000'000);
+    std::cout << "\nstd::unordered_set<int>:" << std::endl;
+    setsBenchmark<std::unordered_set, int, double>(10, 1'000'000);
+
+    std::cout << "\nstd::vector<Heavy>:" << std::endl;
+    vectorsBenchmark<Heavy<int>, Heavy<double>>(10, 500'000);
+    std::cout << "\nstd::set<Heavy>:" << std::endl;
+    setsBenchmark<std::set, Heavy<int>, Heavy<double>>(10, 100'000);
+    std::cout << "\nstd::unordered_set<Heavy>:" << std::endl;
+    setsBenchmark<std::unordered_set, Heavy<int>, Heavy<double>>(10, 100'000);
+
+    std::cout << "\nstd::vector<Expensive>:" << std::endl;
+    vectorsBenchmark<Expensive<int>, Expensive<double>>(10, 50'000);
+    std::cout << "\nstd::set<Expensive>:" << std::endl;
+    setsBenchmark<std::set, Expensive<int>, Expensive<double>>(10, 50'000);
+    std::cout << "\nstd::unordered_set<Expensive>:" << std::endl;
+    setsBenchmark<std::unordered_set, Expensive<int>, Expensive<double>>(10, 50'000);
 
     std::cout << getInt(42) << std::endl;
     std::cout << testOptional(3) << "; " <<  testOptional(2) << "; " <<  testOptional(std::nullopt) << std::endl;

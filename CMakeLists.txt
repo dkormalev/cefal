@@ -15,11 +15,12 @@ if(CEFAL_BUILD_WITH_DUMMY)
     message("-- cefal: Building with dummy unit")
     add_executable(cefal_dummy src/dummy.cpp)
     target_link_libraries(cefal_dummy PRIVATE cefal::cefal)
-set_target_properties(cefal_dummy PROPERTIES
-    CXX_STANDARD 20
-    CXX_STANDARD_REQUIRED ON
-    CXX_EXTENSIONS OFF
-)
+    target_include_directories(cefal_dummy PRIVATE $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>)
+    set_target_properties(cefal_dummy PROPERTIES
+        CXX_STANDARD 20
+        CXX_STANDARD_REQUIRED ON
+        CXX_EXTENSIONS OFF
+    )
 endif()
 
 include(CMakePackageConfigHelpers)

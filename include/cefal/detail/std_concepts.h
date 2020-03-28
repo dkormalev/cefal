@@ -70,9 +70,9 @@ concept TransferableSize = SingleSocketedStdContainer<Src> && SingleSocketedStdC
 
 template <typename Src, typename Func>
 concept SelfTransformable = SingleSocketedStdContainer<Src> && requires(Src src, Func func, InnerType_T<Src> value) {
-    { func(value) } -> std::same_as<InnerType_T<Src>>;
-    {*src.begin() = value};
-    {std::transform(src.begin(), src.end(), src.begin(), func)};
+    { func(std::move(value)) } -> std::same_as<InnerType_T<Src>>;
+    *src.begin() = value;
+    std::transform(src.begin(), src.end(), src.begin(), func); // Technically we need loop here, but it should suffice too
 };
 
 template <typename Src, typename Func>

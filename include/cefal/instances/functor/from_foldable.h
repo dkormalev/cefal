@@ -112,7 +112,9 @@ public:
     requires concepts::SingletonEnabledMonoid<Src> && cefal::detail::SelfTransformable<Src, Func>
         // clang-format on
         static auto map(Src&& src, Func&& func) {
-        std::transform(src.begin(), src.end(), src.begin(), std::forward<Func>(func));
+        // We can't use transform here due to possible rvalue arg in func, let's loop manually
+        for (auto&& x : src)
+            x = func(std::move(x));
         return std::move(src);
     }
 };
