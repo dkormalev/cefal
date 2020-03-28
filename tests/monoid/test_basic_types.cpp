@@ -23,9 +23,7 @@
  *
  */
 
-#include "cefal/cefal"
-
-#include "cefal/instances/monoid/basic_types.h"
+#include "cefal/everything.h"
 
 #include "catch2/catch.hpp"
 

@@ -25,13 +25,7 @@
 
 #include "counter.h"
 
-#include "cefal/cefal"
-
-#include "cefal/instances/foldable/std_containers.h"
-#include "cefal/instances/foldable/with_functions.h"
-#include "cefal/instances/monad/from_foldable.h"
-#include "cefal/instances/monoid/std_containers.h"
-#include "cefal/instances/monoid/with_functions.h"
+#include "cefal/everything.h"
 
 #include "catch2/catch.hpp"
 

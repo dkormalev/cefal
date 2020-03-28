@@ -25,9 +25,7 @@
 
 #include "test_helpers.h"
 
-#include "cefal/cefal"
-
-#include "cefal/instances/filterable/std_optional.h"
+#include "cefal/everything.h"
 
 #include "catch2/catch.hpp"
 

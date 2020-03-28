@@ -23,38 +23,20 @@
  *
  */
 
-#include "cefal/everything.h"
+#include "cefal/cefal"
 
-#include "catch2/catch.hpp"
-
-#include <string>
-
-using namespace cefal;
-
-TEST_CASE("ops::empty()") {
-    std::optional<std::string> result = ops::empty<std::optional<std::string>>();
-    CHECK(!result);
-}
-
-TEST_CASE("ops::append() - Both") {
-    std::optional<std::string> result = std::optional<std::string>("abc") | ops::append(std::optional<std::string>("de"));
-    REQUIRE(result);
-    CHECK(*result == "abcde");
-}
-
-TEST_CASE("ops::append() - Left") {
-    std::optional<std::string> result = std::optional<std::string>("abc") | ops::append(std::optional<std::string>());
-    REQUIRE(result);
-    CHECK(*result == "abc");
-}
-
-TEST_CASE("ops::append() - Right") {
-    std::optional<std::string> result = std::optional<std::string>() | ops::append(std::optional<std::string>("de"));
-    REQUIRE(result);
-    CHECK(*result == "de");
-}
-
-TEST_CASE("ops::append() - None") {
-    std::optional<std::string> result = std::optional<std::string>() | ops::append(std::optional<std::string>());
-    CHECK(!result);
-}
+#include "cefal/instances/filterable/from_foldable.h"
+#include "cefal/instances/filterable/std_optional.h"
+#include "cefal/instances/filterable/with_functions.h"
+#include "cefal/instances/foldable/std_containers.h"
+#include "cefal/instances/foldable/with_functions.h"
+#include "cefal/instances/functor/from_foldable.h"
+#include "cefal/instances/functor/std_optional.h"
+#include "cefal/instances/functor/with_functions.h"
+#include "cefal/instances/monad/from_foldable.h"
+#include "cefal/instances/monad/std_optional.h"
+#include "cefal/instances/monad/with_functions.h"
+#include "cefal/instances/monoid/basic_types.h"
+#include "cefal/instances/monoid/std_containers.h"
+#include "cefal/instances/monoid/std_optional.h"
+#include "cefal/instances/monoid/with_functions.h"

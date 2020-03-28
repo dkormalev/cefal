@@ -25,9 +25,7 @@
 
 #include "counter.h"
 
-#include "cefal/cefal"
-
-#include "cefal/instances/filterable/with_functions.h"
+#include "cefal/everything.h"
 
 #include "catch2/catch.hpp"
 
