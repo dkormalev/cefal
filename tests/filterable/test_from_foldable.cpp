@@ -27,9 +27,10 @@
 
 #include "cefal/cefal"
 
+#include "cefal/instances/filterable/from_foldable.h"
 #include "cefal/instances/foldable/std_containers.h"
 #include "cefal/instances/foldable/with_functions.h"
-#include "cefal/instances/monad/from_foldable.h"
+#include "cefal/instances/functor/from_foldable.h"
 #include "cefal/instances/monoid/std_containers.h"
 #include "cefal/instances/monoid/with_functions.h"
 
@@ -76,41 +77,89 @@ struct TemplatedWithFunctions : public Counter {
     }
 };
 
-TEMPLATE_PRODUCT_TEST_CASE("ops::flatMap()", "",
+template <typename T>
+struct TemplatedWithFunctionsWithSingleton : public Counter {
+    TemplatedWithFunctionsWithSingleton() : Counter() {}
+    TemplatedWithFunctionsWithSingleton(T value) : Counter(), value(value) {}
+    T value = T();
+
+    static TemplatedWithFunctionsWithSingleton empty() {
+        addCustom("empty");
+        return TemplatedWithFunctionsWithSingleton();
+    }
+    TemplatedWithFunctionsWithSingleton append(const TemplatedWithFunctionsWithSingleton& other) const& {
+        addCustom("lvalue_append");
+        return TemplatedWithFunctionsWithSingleton(value + other.value);
+    }
+    TemplatedWithFunctionsWithSingleton append(TemplatedWithFunctionsWithSingleton&& other) && {
+        addCustom("rvalue_append");
+        value += other.value;
+        return std::move(*this);
+    }
+    TemplatedWithFunctionsWithSingleton
+    append(const cefal::helpers::SingletonFrom<TemplatedWithFunctionsWithSingleton<T>>& other) const& {
+        addCustom("lvalue_append");
+        return TemplatedWithFunctionsWithSingleton(value + other.value);
+    }
+    TemplatedWithFunctionsWithSingleton append(cefal::helpers::SingletonFrom<TemplatedWithFunctionsWithSingleton<T>>&& other) && {
+        addCustom("rvalue_append");
+        value += other.value;
+        return std::move(*this);
+    }
+
+    template <typename Result, typename Func>
+    Result foldLeft(Result&& init, Func&& f) const& {
+        addCustom("lvalue_foldLeft");
+        return f(std::move(init), value);
+    }
+    template <typename Result, typename Func>
+    Result foldLeft(Result&& init, Func&& f) && {
+        addCustom("rvalue_foldLeft");
+        return f(std::move(init), std::move(value));
+    }
+};
+
+namespace cefal::helpers {
+template <typename T>
+struct SingletonFrom<TemplatedWithFunctionsWithSingleton<T>> {
+    using value_type = T;
+    value_type value;
+};
+} // namespace cefal::helpers
+
+TEMPLATE_PRODUCT_TEST_CASE("ops::filter()", "",
                            (std::vector, std::list, std::deque, std::set, std::unordered_set, std::multiset,
                             std::unordered_multiset),
                            (std::string)) {
-    WithInnerType_T<TestType, int> result;
+    TestType result;
+    auto func = [](const std::string& s) { return std::stoi(s) % 2; };
     SECTION("Lvalue") {
-        auto func = [](const std::string& s) { return WithInnerType_T<TestType, int>{std::stoi(s)}; };
         const auto left = TestType{"1", "2", "3"};
-        SECTION("Pipe") { result = left | ops::flatMap(func); }
-        SECTION("Curried") { result = ops::flatMap(func)(left); }
+        SECTION("Pipe") { result = left | ops::filter(func); }
+        SECTION("Curried") { result = ops::filter(func)(left); }
     }
     SECTION("Rvalue") {
-        auto func = [](std::string&& s) { return WithInnerType_T<TestType, int>{std::stoi(std::move(s))}; };
         auto left = TestType{"1", "2", "3"};
-        SECTION("Pipe") { result = std::move(left) | ops::flatMap(func); }
-        SECTION("Curried") { result = ops::flatMap(func)(std::move(left)); }
+        SECTION("Pipe") { result = std::move(left) | ops::filter(func); }
+        SECTION("Curried") { result = ops::filter(func)(std::move(left)); }
     }
 
-    CHECK(result == WithInnerType_T<TestType, int>{1, 2, 3});
+    CHECK(result == TestType{"1", "3"});
 }
 
-TEST_CASE("ops::flatMap() - TemplatedWithFunctions<std::string>") {
-    TemplatedWithFunctions<int> result;
+TEMPLATE_TEST_CASE("ops::filter()", "", TemplatedWithFunctions<std::string>, TemplatedWithFunctionsWithSingleton<std::string>) {
+    TestType result;
+    auto func = [](const std::string& s) { return true; };
     SECTION("Lvalue") {
-        auto func = [](const std::string& s) { return TemplatedWithFunctions<int>(std::stoi(s)); };
-        const auto left = TemplatedWithFunctions<std::string>("3");
-        SECTION("Pipe") { result = left | ops::flatMap(func); }
-        SECTION("Curried") { result = ops::flatMap(func)(left); }
+        const auto left = TestType("3");
+        SECTION("Pipe") { result = left | ops::filter(func); }
+        SECTION("Curried") { result = ops::filter(func)(left); }
     }
     SECTION("Rvalue") {
-        auto func = [](std::string&& s) { return TemplatedWithFunctions<int>(std::stoi(std::move(s))); };
-        auto left = TemplatedWithFunctions<std::string>("3");
-        SECTION("Pipe") { result = std::move(left) | ops::flatMap(func); }
-        SECTION("Curried") { result = ops::flatMap(func)(std::move(left)); }
+        auto left = TestType("3");
+        SECTION("Pipe") { result = std::move(left) | ops::filter(func); }
+        SECTION("Curried") { result = ops::filter(func)(std::move(left)); }
     }
 
-    CHECK(result.value == 3);
+    CHECK(result.value == "3");
 }

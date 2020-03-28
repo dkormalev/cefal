@@ -48,7 +48,7 @@ template <typename T>
 struct TemplatedWithFunctions : public Counter {
     TemplatedWithFunctions() : Counter() {}
     TemplatedWithFunctions(T value) : Counter(), value(value) {}
-    T value = 0;
+    T value = T();
 
     static TemplatedWithFunctions empty() {
         addCustom("empty");
