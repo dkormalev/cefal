@@ -3,7 +3,7 @@
 # (Concepts-enabled) Functional Abstraction Layer for C++
 Cefal is a C++20 header-only library with abstractions over basic functional programming concepts (and using C++20 concepts).
 
-It is more a research pet project than a production-ready library. No tests are available yet.
+It is more a research pet project than a production-ready library, but tests are available and performance should be pretty good.
 
 ### Dependencies
 - **C++20**: Also requires concepts library as well
