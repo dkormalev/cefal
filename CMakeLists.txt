@@ -15,7 +15,7 @@ if(CEFAL_BUILD_WITH_DUMMY)
     message("-- cefal: Building with dummy unit")
     add_executable(cefal_dummy src/dummy.cpp)
     target_link_libraries(cefal_dummy PRIVATE cefal::cefal)
-    target_include_directories(cefal_dummy PRIVATE $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>)
+    target_include_directories(cefal_dummy PRIVATE ${CMAKE_SOURCE_DIR})
     set_target_properties(cefal_dummy PROPERTIES
         CXX_STANDARD 20
         CXX_STANDARD_REQUIRED ON
@@ -58,7 +58,7 @@ export(EXPORT cefal-targets FILE ${CMAKE_BINARY_DIR}/cefal-targets.cmake NAMESPA
 
 if(CEFAL_BUILD_TESTS)
     message("-- cefal: Building with tests")
-    list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/tests/catch2)
+    list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/3rdparty/catch2)
     include(Catch)
     include(CTest)
     enable_testing()

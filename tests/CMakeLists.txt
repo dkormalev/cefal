@@ -2,13 +2,13 @@ cmake_minimum_required(VERSION 3.13.0)
 
 macro(cefal_test dir target)
     set(target_name test_${dir}_${target})
-    add_executable(${target_name} ${dir}/test_${target}.cpp test_main.cpp)
+    add_executable(${target_name} ${dir}/test_${target}.cpp helpers/test_main.cpp)
     set_target_properties(${target_name} PROPERTIES
         CXX_STANDARD 20
         CXX_STANDARD_REQUIRED ON
         CXX_EXTENSIONS OFF)
     target_compile_options(${target_name} PRIVATE -Wno-unused-variable)
-    target_include_directories(${target_name} PRIVATE ${CMAKE_SOURCE_DIR}/tests)
+    target_include_directories(${target_name} PRIVATE ${CMAKE_SOURCE_DIR}/3rdparty ${CMAKE_SOURCE_DIR}/tests/helpers)
     target_link_libraries(${target_name} cefal::cefal)
     catch_discover_tests(${target_name} TEST_PREFIX "${dir}/${target}: .")
 endmacro()

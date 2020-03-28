@@ -14,7 +14,7 @@
 #include "cefal/instances/monad/with_functions.h"
 #include "cefal/instances/monad/std_optional.h"
 
-#include "tests/counter.h"
+#include "tests/helpers/counter.h"
 
 #include <iostream>
 #include <set>
