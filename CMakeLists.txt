@@ -65,9 +65,21 @@ if(CEFAL_BUILD_TESTS)
     add_subdirectory(tests)
 
     add_custom_target(with-test
-      COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --parallel 8
-      COMMAND ${CMAKE_COMMAND} -E env CTEST_OUTPUT_ON_FAILURE=1 ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target test
-      USES_TERMINAL
+        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --parallel 8
+        COMMAND ${CMAKE_COMMAND} -E env CTEST_OUTPUT_ON_FAILURE=1 ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target test
+        USES_TERMINAL
     )
 endif()
 
+if(CEFAL_BUILD_BENCHMARKS)
+    message("-- cefal: Building with benchmarks")
+    list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/3rdparty/catch2)
+    include(Catch)
+    add_subdirectory(benchmarks)
+
+    add_custom_target(with-benchmarks
+        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --parallel 8
+        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target run-benchmarks
+        USES_TERMINAL
+    )
+endif()

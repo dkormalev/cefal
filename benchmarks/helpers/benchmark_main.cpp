@@ -1,0 +1,4 @@
+#define CATCH_CONFIG_ENABLE_BENCHMARKING
+#define CATCH_CONFIG_CONSOLE_WIDTH 90
+#define CATCH_CONFIG_MAIN
+#include "catch2/catch.hpp"
