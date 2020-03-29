@@ -42,6 +42,7 @@ concept StdContainer = requires (C c) {
     {std::end(c)} -> std::same_as<typename C::iterator>;
     {std::next(std::begin(c))} -> std::same_as<typename C::iterator>;
     {*std::begin(c)} -> std::convertible_to<typename C::value_type>;
+    {c.size()} -> std::convertible_to<size_t>;
 };
 
 template<typename C>
@@ -61,12 +62,11 @@ concept VectorLikeContainer = SingleSocketedStdContainer<C> && requires (C c, In
 template <typename C>
 concept Reservable = SingleSocketedStdContainer<C> && requires(C c, size_t size) {
     c.reserve(size);
+    c.shrink_to_fit();
 };
 
 template <typename Src, typename Dest>
-concept TransferableSize = SingleSocketedStdContainer<Src> && SingleSocketedStdContainer<Dest> && requires(Src src, Dest dest) {
-    dest.reserve(src.size());
-};
+concept TransferableSize = SingleSocketedStdContainer<Src> && Reservable<Dest>;
 
 template <typename Src, typename Func>
 concept SelfTransformable = SingleSocketedStdContainer<Src> && requires(Src src, Func func, InnerType_T<Src> value) {

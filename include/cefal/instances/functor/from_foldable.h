@@ -47,7 +47,7 @@ template <typename Dest, typename Src>
 void prepareMapDestination(const Src& src, Dest& dest) {
 }
 
-template <typename Dest, typename Src>
+template <concepts::Monoid Dest, concepts::Monoid Src>
 Dest createMapDestination(const Src& src) {
     auto dest = ops::empty<Dest>();
     prepareMapDestination(src, dest);

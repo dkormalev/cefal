@@ -37,6 +37,33 @@
 #include <type_traits>
 
 namespace cefal::instances {
+namespace detail {
+template <cefal::detail::Reservable C>
+void prepareFilterDestination(const C& src, C& dest) {
+    dest.reserve(src.size());
+}
+
+template <typename C>
+void prepareFilterDestination(const C& src, C& dest) {
+}
+
+template <concepts::Monoid C>
+C createFilterDestination(const C& src) {
+    auto dest = ops::empty<C>();
+    prepareFilterDestination(src, dest);
+    return dest;
+}
+
+template <cefal::detail::Reservable C>
+void finalizeFilterDestination(C& dest) {
+    dest.shrink_to_fit();
+}
+
+template <typename C>
+void finalizeFilterDestination(C& dest) {
+}
+} // namespace detail
+
 template <typename Src>
 // clang-format off
 requires concepts::Foldable<Src> && concepts::Monoid<Src> && (!detail::HasFilterableMethods<Src>)
@@ -96,11 +123,12 @@ public:
     requires concepts::SingletonEnabledMonoid<Src> && cefal::detail::VectorLikeContainer<Src>
         // clang-format on
         static auto filter(const Src& src, Func&& func) {
-        Src dest;
+        Src dest = detail::createFilterDestination(src);
         for (auto&& x : src) {
             if (func(x))
                 dest.push_back(x);
         }
+        detail::finalizeFilterDestination(dest);
         return dest;
     }
 
