@@ -88,6 +88,23 @@ public:
     }
 
     // We don't need SingletonEnabledMonoid here, but it makes code easier (no extra negative checks and all that)
+    // Technically it shouldn't occur, because SingletonEnabledMonoid is less strict than VectorLikeContainer
+    // This overload is here because of subpar move ctor speed for deque
+    // For other containers performance of general SingletonEnabledMonoid is the same
+    template <typename Func>
+    // clang-format off
+    requires concepts::SingletonEnabledMonoid<Src> && cefal::detail::VectorLikeContainer<Src>
+        // clang-format on
+        static auto filter(const Src& src, Func&& func) {
+        Src dest;
+        for (auto&& x : src) {
+            if (func(x))
+                dest.push_back(x);
+        }
+        return dest;
+    }
+
+    // We don't need SingletonEnabledMonoid here, but it makes code easier (no extra negative checks and all that)
     // Technically it shouldn't occur, because SingletonEnabledMonoid is less strict than StdRemoveIfable
     // We also can't use std::erase_if here due to it being in multiple headers, so we need an extra overload for set-like containers
     template <typename Func>

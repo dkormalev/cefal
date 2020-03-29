@@ -107,7 +107,7 @@ struct Monoid<Src> {
     template <typename T>
     static Src append(T&& left, helpers::SingletonFrom<Src>&& right) {
         static_assert(std::is_same_v<std::remove_cvref_t<T>, Src>, "Argument type should be the same as monoid");
-        std::remove_cvref_t<T> result = std::forward<T>(left);
+        Src result = std::forward<T>(left);
         result.push_back(std::move(right.value));
         return result;
     }
@@ -129,7 +129,7 @@ struct Monoid<Src> {
     template <typename T>
     static Src append(T&& left, helpers::SingletonFrom<Src>&& right) {
         static_assert(std::is_same_v<std::remove_cvref_t<T>, Src>, "Argument type should be the same as monoid");
-        std::remove_cvref_t<T> result = std::forward<T>(left);
+        Src result = std::forward<T>(left);
         result.insert(std::move(right.value));
         return result;
     }

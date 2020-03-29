@@ -106,6 +106,22 @@ public:
     }
 
     // We don't need SingletonEnabledMonoid here, but it makes code easier (no extra negative checks and all that)
+    // Technically it shouldn't occur, because SingletonEnabledMonoid is less strict than VectorLikeContainer
+    // This overload is here because of subpar move ctor speed for deque
+    // For other containers performance of general SingletonEnabledMonoid is the same
+    template <typename Func>
+    // clang-format off
+    requires concepts::SingletonEnabledMonoid<Src> && cefal::detail::VectorLikeContainer<Src>
+        // clang-format on
+        static auto map(const Src& src, Func&& func) {
+        using Dest = WithInnerType_T<Src, std::invoke_result_t<Func, T>>;
+        auto dest = detail::createMapDestination<Dest>(src);
+        for (auto&& x : src)
+            dest.push_back(func(x));
+        return dest;
+    }
+
+    // We don't need SingletonEnabledMonoid here, but it makes code easier (no extra negative checks and all that)
     // Technically it shouldn't occur, because SingletonEnabledMonoid is less strict than SelfTransformable
     template <typename Func>
     // clang-format off
