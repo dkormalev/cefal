@@ -122,16 +122,24 @@ public:
     }
 
     // We don't need SingletonEnabledMonoid here, but it makes code easier (no extra negative checks and all that)
-    // Technically it shouldn't occur, because SingletonEnabledMonoid is less strict than SelfTransformable
+    // Technically it shouldn't occur, because SingletonEnabledMonoid is less strict than VectorLikeContainer
     template <typename Func>
     // clang-format off
-    requires concepts::SingletonEnabledMonoid<Src> && cefal::detail::SelfTransformable<Src, Func>
+    requires concepts::SingletonEnabledMonoid<Src> && cefal::detail::VectorLikeContainer<Src>
         // clang-format on
         static auto map(Src&& src, Func&& func) {
-        // We can't use transform here due to possible rvalue arg in func, let's loop manually
-        for (auto&& x : src)
-            x = func(std::move(x));
-        return std::move(src);
+        using Dest = WithInnerType_T<Src, std::invoke_result_t<Func, T>>;
+        if constexpr (std::is_same_v<Dest, Src>) {
+            // We can't use transform here due to possible rvalue arg in func, let's loop manually
+            for (auto&& x : src)
+                x = func(std::move(x));
+            return std::move(src);
+        } else {
+            auto dest = detail::createMapDestination<Dest>(src);
+            for (auto&& x : src)
+                dest.push_back(func(std::move(x)));
+            return dest;
+        }
     }
 };
 } // namespace cefal::instances

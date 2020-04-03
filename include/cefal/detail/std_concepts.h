@@ -57,6 +57,7 @@ concept SetLikeContainer = SingleSocketedStdContainer<C> && requires (C c, Inner
 template<typename C>
 concept VectorLikeContainer = SingleSocketedStdContainer<C> && requires (C c, InnerType_T<C> value, size_t size) {
     c.push_back(value);
+    *c.begin() = value;
 };
 
 template <typename C>
@@ -67,13 +68,6 @@ concept Reservable = SingleSocketedStdContainer<C> && requires(C c, size_t size)
 
 template <typename Src, typename Dest>
 concept TransferableSize = SingleSocketedStdContainer<Src> && Reservable<Dest>;
-
-template <typename Src, typename Func>
-concept SelfTransformable = SingleSocketedStdContainer<Src> && requires(Src src, Func func, InnerType_T<Src> value) {
-    { func(std::move(value)) } -> std::same_as<InnerType_T<Src>>;
-    *src.begin() = value;
-    std::transform(src.begin(), src.end(), src.begin(), func); // Technically we need loop here, but it should suffice too
-};
 
 template <typename Src, typename Func>
 concept StdRemoveIfable = SingleSocketedStdContainer<Src> && requires(Src src, Func func, InnerType_T<Src> value) {

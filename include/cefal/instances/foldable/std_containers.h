@@ -53,9 +53,15 @@ struct Foldable<Src> {
     template <typename Result, typename Func>
     static auto foldLeft(Src&& src, Result&& initial, Func&& func) requires cefal::detail::SetLikeContainer<Src> {
         using CleanResult = std::remove_cvref_t<Result>;
+        using InnerT = typename Src::value_type;
         CleanResult result = std::forward<Result>(initial);
-        while (!src.empty())
-            result = func(std::move(result), std::move(src.extract(src.begin()).value()));
+        if constexpr (std::is_trivial_v<InnerT> && sizeof(InnerT) <= 8) {
+            for (auto x : src)
+                result = func(std::move(result), std::move(x));
+        } else {
+            while (!src.empty())
+                result = func(std::move(result), std::move(src.extract(src.begin()).value()));
+        }
         return result;
     }
 };

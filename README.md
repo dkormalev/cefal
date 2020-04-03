@@ -150,9 +150,9 @@ Type              | 10%      | 25%      | 50%      | 75%      | 90%
 ----------------- | -------: | -------: | -------: | -------: | ---------:
 **vector**        |||||
 Immutable cefal   | 11.792   | 35.182   | 82.349   | 148.333  | 390.113
-Immutable std     | 59.871   | 73.166   | 83.444   | 102.425  | 228.07
-Mutable cefal     | 29.069   | 21.547   | 10.397   | 3.508    | 702.71
-Mutable std       | 29.330   | 21.699   | 10.461   | 3.786    | 764.78
+Immutable std     | 59.871   | 73.166   | 83.444   | 102.425  | 228.070
+Mutable cefal     | 29.069   | 21.547   | 10.397   | 3.508    | 0.702
+Mutable std       | 29.330   | 21.699   | 10.461   | 3.786    | 0.764
 **list**          |||||
 Immutable cefal   | 33.141   | 88.852   | 200.685  | 357.032  | 494.956
 Immutable std     | 330.141  | 358.375  | 401.921  | 473.949  | 550.646
@@ -164,12 +164,12 @@ Immutable std     | 603.614  | 703.117  | 848.217  | 867.815  | 875.591
 Mutable cefal     | 37.555   | 25.851   | 11.376   | 3.446    | 0.772
 Mutable std       | 37.160   | 25.373   | 11.433   | 3.412    | 0.704
 **set**           |||||
-Immutable cefal   | 109.408  | 270.070  | 579.415  | 842.437  | 1014.06
-Immutable std     | 1062.730 | 973.881  | 1292.680 | 1425.520 | 1353.21
+Immutable cefal   | 109.408  | 270.070  | 579.415  | 842.437  | 1014.060
+Immutable std     | 1062.730 | 973.881  | 1292.680 | 1425.520 | 1353.210
 Mutable cefal     | 48.569   | 40.696   | 30.280   | 16.878   | 7.575
 Mutable std       | 48.070   | 42.310   | 30.579   | 16.679   | 7.590
 **unordered_set** |||||
-Immutable cefal   | 97.620   | 261.067  | 563.971  | 901.342  | 1011.66
+Immutable cefal   | 97.620   | 261.067  | 563.971  | 901.342  | 1011.660
 Immutable std     | 863.308  | 841.851  | 884.763  | 883.926  | 873.447
 Mutable cefal     | 175.319  | 172.565  | 129.350  | 66.621   | 26.215
 Mutable std       | 174.427  | 160.743  | 129.702  | 67.049   | 26.729
@@ -183,8 +183,9 @@ Mutable std       | 174.427  | 160.743  | 129.702  | 67.049   | 26.729
  * `filter()` is better than `std::erase_if` for mutable lists of move-efficient types, especially when more than half of elements are accepted (more accepted - bigger the gap in favor of `filter()`)
  * `filter()` is on par with `std::erase_if` in case of immutable vector of small types and in case of all other mutable containers not mentioned above
  * For immutable containers `filter()` is either on par or better than `std::erase_if`. Less elements are accepted - bigger the gap for in favor of `filter()` (up to 10x in case of 10% elements accepted)
+ * Benchmarks for mapping to another inner type also exist in source codes (not added here for brevity). For immutable containers they show pretty much the same results (i.e. almost equal between cefal and std). Mutable cefal benchmarks for move-effective types though shows 1.5x-2x better performance on all containers except unordered_set.
 
-As a general conclusion: there are for sure few cases where cefal shows itself worse than direct usage of std algorithm (not tremendously though), but there are also a lot of cases where cefal works faster by 1-2 orders of magnitude (especially in case of move-efficient types) and in remaininf cases it is on par with std.
+As a general conclusion: there are for sure few cases where cefal shows itself worse than direct usage of std algorithm (not tremendously though), but there are also a lot of cases where cefal works faster by 1-2 orders of magnitude (especially in case of move-efficient types) and in remaining cases it is on par with std.
 
 Cefal still lacks laziness though, but it can be fixed with ranges coming to std libraries.
 

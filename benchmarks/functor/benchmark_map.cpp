@@ -66,8 +66,7 @@ struct ContainerSize<C> {
 template <typename T>
 constexpr inline size_t ContainerSize_V = ContainerSize<T>::value;
 
-TEMPLATE_PRODUCT_TEST_CASE("cefal::map()", "", (std::vector, std::list, std::deque), (int, Expensive<int>)) {
-    auto singleton = cefal::helpers::SingletonFrom<TestType>{cefal::InnerType_T<TestType>(5)};
+TEMPLATE_PRODUCT_TEST_CASE("cefal::map() to same type", "", (std::vector, std::list, std::deque), (int, Expensive<int>)) {
     auto func = []<typename T>(T&& x) { return std::forward<T>(x) + 1; };
 
     BENCHMARK_ADVANCED("cefal::map() - immutable - x" + std::to_string(ContainerSize_V<TestType>))
@@ -120,8 +119,8 @@ TEMPLATE_PRODUCT_TEST_CASE("cefal::map()", "", (std::vector, std::list, std::deq
     };
 }
 
-TEMPLATE_PRODUCT_TEST_CASE("cefal::map()", "", (std::set, std::unordered_set, std::multiset, std::unordered_multiset),
-                           (int, Expensive<int>)) {
+TEMPLATE_PRODUCT_TEST_CASE("cefal::map() to same type", "",
+                           (std::set, std::unordered_set, std::multiset, std::unordered_multiset), (int, Expensive<int>)) {
     auto func = []<typename T>(T&& x) { return std::forward<T>(x) + 1; };
 
     BENCHMARK_ADVANCED("cefal::map() - immutable - x" + std::to_string(ContainerSize_V<TestType>))
@@ -158,6 +157,95 @@ TEMPLATE_PRODUCT_TEST_CASE("cefal::map()", "", (std::set, std::unordered_set, st
         meter.measure([&src, &func](int i) {
             src = std::move(src) | ops::map(func);
             return *src.begin();
+        });
+    };
+}
+
+TEMPLATE_PRODUCT_TEST_CASE("cefal::map() to different type", "", (std::vector, std::list, std::deque), (int, Expensive<int>)) {
+    auto func = []<typename T>(T&& x) { return std::forward<T>(x) + (double)1.0; };
+    using Dest = WithInnerType_T<TestType, std::invoke_result_t<decltype(func), InnerType_T<TestType>>>;
+
+    BENCHMARK_ADVANCED("cefal::map() - immutable - x" + std::to_string(ContainerSize_V<TestType>))
+    (Catch::Benchmark::Chronometer meter) {
+        auto seed = std::chrono::system_clock::now();
+        TestType src;
+        for (int j = 0; j < ContainerSize_V<TestType>; ++j)
+            src.push_back(seed.time_since_epoch().count() + j);
+        meter.measure([&src, &func](int i) {
+            auto dest = src | ops::map(func);
+            return *dest.begin();
+        });
+    };
+
+    BENCHMARK_ADVANCED("std::transform() - immutable - x" + std::to_string(ContainerSize_V<TestType>))
+    (Catch::Benchmark::Chronometer meter) {
+        auto seed = std::chrono::system_clock::now();
+        TestType src;
+        for (int j = 0; j < ContainerSize_V<TestType>; ++j)
+            src.push_back(seed.time_since_epoch().count() + j);
+        meter.measure([&src, &func](int i) {
+            auto dest = cefal::instances::detail::createMapDestination<Dest>(src); // calls reserve()
+            std::transform(src.begin(), src.end(), std::back_inserter(dest), func);
+            return *dest.begin();
+        });
+    };
+
+    BENCHMARK_ADVANCED("cefal::map() - mutable - x" + std::to_string(ContainerSize_V<TestType>))
+    (Catch::Benchmark::Chronometer meter) {
+        auto seed = std::chrono::system_clock::now();
+        std::vector<TestType> src(meter.runs());
+        for (auto&& x : src) {
+            for (int j = 0; j < ContainerSize_V<TestType>; ++j)
+                x.push_back(seed.time_since_epoch().count() + j);
+        }
+        meter.measure([&src, &func](int i) {
+            auto dest = std::move(src[i]) | ops::map(func);
+            return *dest.begin();
+        });
+    };
+}
+
+TEMPLATE_PRODUCT_TEST_CASE("cefal::map() to different type", "",
+                           (std::set, std::unordered_set, std::multiset, std::unordered_multiset), (int, Expensive<int>)) {
+    auto func = []<typename T>(T&& x) { return std::forward<T>(x) + (double)1.0; };
+    using Dest = WithInnerType_T<TestType, std::invoke_result_t<decltype(func), InnerType_T<TestType>>>;
+
+    BENCHMARK_ADVANCED("cefal::map() - immutable - x" + std::to_string(ContainerSize_V<TestType>))
+    (Catch::Benchmark::Chronometer meter) {
+        auto seed = std::chrono::system_clock::now();
+        TestType src;
+        for (int j = 0; j < ContainerSize_V<TestType>; ++j)
+            src.insert(seed.time_since_epoch().count() + j);
+        meter.measure([&src, &func](int i) {
+            auto dest = src | ops::map(func);
+            return *dest.begin();
+        });
+    };
+
+    BENCHMARK_ADVANCED("std::transform() - immutable - x" + std::to_string(ContainerSize_V<TestType>))
+    (Catch::Benchmark::Chronometer meter) {
+        auto seed = std::chrono::system_clock::now();
+        TestType src;
+        for (int j = 0; j < ContainerSize_V<TestType>; ++j)
+            src.insert(seed.time_since_epoch().count() + j);
+        meter.measure([&src, &func](int i) {
+            Dest dest;
+            std::transform(src.begin(), src.end(), std::inserter(dest, dest.end()), func);
+            return *dest.begin();
+        });
+    };
+
+    BENCHMARK_ADVANCED("cefal::map() - mutable - x" + std::to_string(ContainerSize_V<TestType>))
+    (Catch::Benchmark::Chronometer meter) {
+        auto seed = std::chrono::system_clock::now();
+        std::vector<TestType> src(meter.runs());
+        for (auto&& x : src) {
+            for (int j = 0; j < ContainerSize_V<TestType>; ++j)
+                x.insert(seed.time_since_epoch().count() + j);
+        }
+        meter.measure([&src, &func](int i) {
+            auto dest = std::move(src[i]) | ops::map(func);
+            return *dest.begin();
         });
     };
 }
