@@ -23,23 +23,33 @@
  *
  */
 
-#include "cefal/cefal"
+#pragma once
 
-#include "cefal/instances/filterable/from_foldable.h"
-#include "cefal/instances/filterable/std_optional.h"
-#include "cefal/instances/filterable/std_ranges.h"
-#include "cefal/instances/filterable/with_functions.h"
-#include "cefal/instances/foldable/std_containers.h"
-#include "cefal/instances/foldable/std_ranges.h"
-#include "cefal/instances/foldable/with_functions.h"
-#include "cefal/instances/functor/from_foldable.h"
-#include "cefal/instances/functor/std_optional.h"
-#include "cefal/instances/functor/std_ranges.h"
-#include "cefal/instances/functor/with_functions.h"
-#include "cefal/instances/monad/from_foldable.h"
-#include "cefal/instances/monad/std_optional.h"
-#include "cefal/instances/monad/with_functions.h"
-#include "cefal/instances/monoid/basic_types.h"
-#include "cefal/instances/monoid/std_containers.h"
-#include "cefal/instances/monoid/std_optional.h"
-#include "cefal/instances/monoid/with_functions.h"
+#include "cefal/common.h"
+#include "cefal/foldable.h"
+#include "cefal/helpers/std_ranges.h"
+
+#include <numeric>
+#include <ranges>
+#include <type_traits>
+
+namespace cefal {
+namespace instances {
+template <std::ranges::view Src>
+struct Foldable<Src> {
+    template <typename Input, typename Result, typename Func>
+    static auto foldLeft(Input&& src, Result&& initial, Func&& func) {
+        static_assert(std::is_same_v<Src, std::remove_cvref_t<Input>>, "Should be same type");
+        if constexpr (IsOwnedView_V<Src>) {
+            using CleanResult = std::remove_cvref_t<Result>;
+            CleanResult result = std::forward<Result>(initial);
+            for (auto&& x : src)
+                result = func(std::move(result), std::move(x));
+            return result;
+        } else {
+            return std::accumulate(src.begin(), src.end(), std::forward<Result>(initial), std::forward<Func>(func));
+        }
+    }
+};
+} // namespace instances
+} // namespace cefal

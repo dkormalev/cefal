@@ -1,24 +1,11 @@
-#include "cefal/cefal"
-#include "cefal/instances/monoid/basic_types.h"
-#include "cefal/instances/monoid/std_containers.h"
-#include "cefal/instances/monoid/with_functions.h"
-#include "cefal/instances/filterable/from_foldable.h"
-#include "cefal/instances/filterable/with_functions.h"
-#include "cefal/instances/filterable/std_optional.h"
-#include "cefal/instances/foldable/std_containers.h"
-#include "cefal/instances/foldable/with_functions.h"
-#include "cefal/instances/functor/from_foldable.h"
-#include "cefal/instances/functor/with_functions.h"
-#include "cefal/instances/functor/std_optional.h"
-#include "cefal/instances/monad/from_foldable.h"
-#include "cefal/instances/monad/with_functions.h"
-#include "cefal/instances/monad/std_optional.h"
+#include "cefal/everything.h"
 
 #include <iostream>
 #include <set>
 #include <unordered_set>
 #include <vector>
 #include <chrono>
+#include <ranges>
 
 using namespace cefal;
 
@@ -136,6 +123,25 @@ struct ContainerTester {
 };
 
 int main() {
+    std::set<int> vec = {1, 2, 3};
+    for (int x : std::views::all(vec))
+        std::cout << x << " ";
+    std::cout << std::endl;
+    std::string rangeResult = std::views::all(vec) | ops::map([](int x) {return x + 2;})
+                                                   | ops::filter([](int x) {return x % 2;})
+                                                   | ops::foldLeft(std::string(), [](std::string c, int x) {
+                                                        return std::move(c) + std::to_string(x);
+                                                     });
+    std::cout << rangeResult << std::endl;
+
+    std::string movableRangeResult = std::views::all(vec) | ops::ownView() | ops::ownView()
+                                                          | ops::map([](int x) {return x + 2;})
+                                                          | ops::filter([](int x) {return x % 2;})
+                                                          | ops::foldLeft(std::string(), [](std::string c, int x) {
+                                                                return std::move(c) + std::to_string(x);
+                                                            });
+    std::cout << movableRangeResult << std::endl;
+
     std::cout << getInt(42) << std::endl;
     std::cout << testOptional(3) << "; " <<  testOptional(2) << "; " <<  testOptional(std::nullopt) << std::endl;
     { ContainerTester<std::vector<int>> x; }

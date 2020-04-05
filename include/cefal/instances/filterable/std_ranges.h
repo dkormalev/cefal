@@ -23,23 +23,24 @@
  *
  */
 
-#include "cefal/cefal"
+#pragma once
 
-#include "cefal/instances/filterable/from_foldable.h"
-#include "cefal/instances/filterable/std_optional.h"
-#include "cefal/instances/filterable/std_ranges.h"
-#include "cefal/instances/filterable/with_functions.h"
-#include "cefal/instances/foldable/std_containers.h"
-#include "cefal/instances/foldable/std_ranges.h"
-#include "cefal/instances/foldable/with_functions.h"
-#include "cefal/instances/functor/from_foldable.h"
-#include "cefal/instances/functor/std_optional.h"
-#include "cefal/instances/functor/std_ranges.h"
-#include "cefal/instances/functor/with_functions.h"
-#include "cefal/instances/monad/from_foldable.h"
-#include "cefal/instances/monad/std_optional.h"
-#include "cefal/instances/monad/with_functions.h"
-#include "cefal/instances/monoid/basic_types.h"
-#include "cefal/instances/monoid/std_containers.h"
-#include "cefal/instances/monoid/std_optional.h"
-#include "cefal/instances/monoid/with_functions.h"
+#include "cefal/filterable.h"
+
+#include <algorithm>
+#include <ranges>
+
+namespace cefal::instances {
+template <std::ranges::view Src>
+struct Filterable<Src> {
+    template <typename Func>
+    static auto filter(const Src& src, Func&& func) {
+        return src | std::views::filter(func);
+    }
+
+    template <typename Func>
+    static auto filter(Src&& src, Func&& func) {
+        return std::move(src) | std::views::filter(func);
+    }
+};
+} // namespace cefal::instances
