@@ -25,24 +25,29 @@
 
 #pragma once
 
-#include "cefal/common.h"
-
-namespace cefal::detail {
-template <typename To, typename From>
-struct IsValidInnerTypeTransformation {
-    static constexpr bool value = std::same_as<From, To>;
+namespace cefal {
+namespace detail {
+template <typename...>
+struct SimpleInnerType;
+template <template <typename...> typename C, typename T, typename... Ts>
+struct SimpleInnerType<C<T, Ts...>> {
+    using type = T;
 };
-template <typename To, typename From>
-constexpr inline bool IsValidInnerTypeTransformation_V = IsValidInnerTypeTransformation<To, From>::value;
+} // namespace detail
 
-// clang-format off
-template<typename To, typename From>
-concept ValidInnerTypeTransformationFrom = IsValidInnerTypeTransformation_V<To, From>;
-
-template<typename C>
-concept SingleSocketed = requires {
-  typename InnerType<C>;
-  typename WithInnerType<C, int>;
+template <typename T>
+struct InnerType {
+    using type = detail::SimpleInnerType<T>::type;
 };
-// clang-format on
-} // namespace cefal::detail
+template <typename T>
+using InnerType_T = InnerType<T>::type;
+
+template <typename...>
+struct WithInnerType;
+template <template <typename...> typename C, typename T, typename... Ts, typename NewT>
+struct WithInnerType<C<T, Ts...>, NewT> {
+    using type = C<NewT>;
+};
+template <typename... Ts>
+using WithInnerType_T = WithInnerType<Ts...>::type;
+} // namespace cefal

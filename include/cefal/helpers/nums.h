@@ -25,24 +25,25 @@
 
 #pragma once
 
-#include "cefal/common.h"
+#include <concepts>
 
-namespace cefal::detail {
-template <typename To, typename From>
-struct IsValidInnerTypeTransformation {
-    static constexpr bool value = std::same_as<From, To>;
+namespace cefal {
+namespace detail {
+template <typename T>
+concept Arithmetic = std::integral<T> || std::floating_point<T>;
+} // namespace detail
+
+template <detail::Arithmetic T>
+struct Sum {
+    Sum(T x = T()) : value(x) {}
+    T value;
+    operator T() const { return value; }
 };
-template <typename To, typename From>
-constexpr inline bool IsValidInnerTypeTransformation_V = IsValidInnerTypeTransformation<To, From>::value;
 
-// clang-format off
-template<typename To, typename From>
-concept ValidInnerTypeTransformationFrom = IsValidInnerTypeTransformation_V<To, From>;
-
-template<typename C>
-concept SingleSocketed = requires {
-  typename InnerType<C>;
-  typename WithInnerType<C, int>;
+template <detail::Arithmetic T>
+struct Product {
+    Product(T x = T()) : value(x) {}
+    T value;
+    operator T() const { return value; }
 };
-// clang-format on
-} // namespace cefal::detail
+} // namespace cefal

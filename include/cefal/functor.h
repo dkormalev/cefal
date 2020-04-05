@@ -43,8 +43,8 @@ struct FunctorFromFunctionsExists;
 template <typename T, typename InnerT = InnerType_T<T>>
 concept HasFunctorMethods = requires(T x, InnerT value, std::function<InnerT(InnerT)> f) {
     typename FunctorFromFunctionsExists<T>::type;
-    { T::unit(std::move(value)) } -> std::same_as<T>;
-    { x.map(std::move(f)) } -> std::same_as<T>;
+    { T::unit(std::move(value)) } -> cefal::detail::ValidInnerTypeTransformationFrom<T>;
+    { x.map(std::move(f)) } -> cefal::detail::ValidInnerTypeTransformationFrom<T>;
 };
 // clang-format on
 } // namespace detail
@@ -55,10 +55,10 @@ namespace concepts {
 template <typename T, typename InnerT = InnerType_T<std::remove_cvref_t<T>>, typename CleanT = std::remove_cvref_t<T>>
 concept Functor =
 requires(CleanT x, InnerT value, std::function<InnerT(InnerT)> converter) {
-    { instances::Functor<CleanT>::unit(value) } -> std::same_as<CleanT>;
-    { instances::Functor<CleanT>::unit(std::move(value)) } -> std::same_as<CleanT>;
-    { instances::Functor<CleanT>::map(x, std::move(converter)) } -> std::same_as<CleanT>;
-    { instances::Functor<CleanT>::map(std::move(x), std::move(converter)) } -> std::same_as<CleanT>;
+    { instances::Functor<CleanT>::unit(value) } -> cefal::detail::ValidInnerTypeTransformationFrom<CleanT>;
+    { instances::Functor<CleanT>::unit(std::move(value)) } -> cefal::detail::ValidInnerTypeTransformationFrom<CleanT>;
+    { instances::Functor<CleanT>::map(x, std::move(converter)) } -> cefal::detail::ValidInnerTypeTransformationFrom<CleanT>;
+    { instances::Functor<CleanT>::map(std::move(x), std::move(converter)) } -> cefal::detail::ValidInnerTypeTransformationFrom<CleanT>;
 };
 // clang-format on
 } // namespace concepts

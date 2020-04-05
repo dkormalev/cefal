@@ -43,7 +43,7 @@ struct FilterableFromFunctionsExists;
 template <typename T, typename InnerT = InnerType_T<T>>
 concept HasFilterableMethods = requires(T x, std::function<bool(InnerT)> predicate) {
     typename FilterableFromFunctionsExists<T>::type;
-    { x.filter(std::move(predicate)) } -> std::same_as<T>;
+    { x.filter(std::move(predicate)) } -> cefal::detail::ValidInnerTypeTransformationFrom<T>;
 };
 // clang-format on
 } // namespace detail
@@ -54,8 +54,8 @@ namespace concepts {
 template <typename T, typename InnerT = InnerType_T<std::remove_cvref_t<T>>, typename CleanT = std::remove_cvref_t<T>>
 concept Filterable =
 requires(CleanT x, std::function<bool(InnerT)> predicate) {
-    { instances::Filterable<CleanT>::filter(x, std::move(predicate)) } -> std::same_as<CleanT>;
-    { instances::Filterable<CleanT>::filter(std::move(x), std::move(predicate)) } -> std::same_as<CleanT>;
+    { instances::Filterable<CleanT>::filter(x, std::move(predicate)) } -> cefal::detail::ValidInnerTypeTransformationFrom<CleanT>;
+    { instances::Filterable<CleanT>::filter(std::move(x), std::move(predicate)) } -> cefal::detail::ValidInnerTypeTransformationFrom<CleanT>;
 };
 // clang-format on
 } // namespace concepts

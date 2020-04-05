@@ -25,46 +25,14 @@
 
 #pragma once
 
-#include <concepts>
+#include "cefal/detail/common_concepts.h"
+
+#include "cefal/helpers/inner_type.h"
+#include "cefal/helpers/nums.h"
+
 #include <utility>
 
 namespace cefal {
-namespace detail {
-template <typename T>
-concept Arithmetic = std::integral<T> || std::floating_point<T>;
-}
-template <typename...>
-struct InnerType;
-template <template <typename...> typename C, typename T, typename... Ts>
-struct InnerType<C<T, Ts...>> {
-    using type = T;
-};
-template <typename T>
-using InnerType_T = InnerType<T>::type;
-
-template <typename...>
-struct WithInnerType;
-template <template <typename...> typename C, typename T, typename... Ts, typename NewT>
-struct WithInnerType<C<T, Ts...>, NewT> {
-    using type = C<NewT>;
-};
-template <typename... Ts>
-using WithInnerType_T = WithInnerType<Ts...>::type;
-
-template <detail::Arithmetic T>
-struct Sum {
-    Sum(T x = T()) : value(x) {}
-    T value;
-    operator T() const { return value; }
-};
-
-template <detail::Arithmetic T>
-struct Product {
-    Product(T x = T()) : value(x) {}
-    T value;
-    operator T() const { return value; }
-};
-
 namespace ops {
 template <typename Left, typename Op>
 inline auto operator|(Left&& left, Op&& op) {

@@ -44,13 +44,13 @@ struct MonadFromFunctionsExists;
 template <typename T, typename InnerT = InnerType_T<T>>
 concept HasMonadMethods = requires(T x, std::function<T(InnerT)> f) {
     typename MonadFromFunctionsExists<T>::type;
-    { std::move(x).flatMap(std::move(f)) } -> std::same_as<T>;
+    { std::move(x).flatMap(std::move(f)) } -> cefal::detail::ValidInnerTypeTransformationFrom<T>;
 };
 
 template <typename T, typename InnerT = InnerType_T<T>>
 concept HasMonadSnakeCaseMethods = requires(T x, std::function<T(InnerT)> f) {
     typename MonadFromFunctionsExists<T>::type;
-    { std::move(x).flat_map(std::move(f)) } -> std::same_as<T>;
+    { std::move(x).flat_map(std::move(f)) } -> cefal::detail::ValidInnerTypeTransformationFrom<T>;
 };
 // clang-format on
 } // namespace detail
@@ -61,8 +61,8 @@ namespace concepts {
 template <typename T, typename InnerT = InnerType_T<std::remove_cvref_t<T>>, typename CleanT = std::remove_cvref_t<T>>
 concept Monad =
 Functor<T> && requires (CleanT x, std::function<CleanT(InnerT)> converter) {
-  {instances::Monad<CleanT>::flatMap(x, std::move(converter))} -> std::same_as<CleanT>;
-  {instances::Monad<CleanT>::flatMap(std::move(x), std::move(converter))} -> std::same_as<CleanT>;
+  {instances::Monad<CleanT>::flatMap(x, std::move(converter))} -> cefal::detail::ValidInnerTypeTransformationFrom<CleanT>;
+  {instances::Monad<CleanT>::flatMap(std::move(x), std::move(converter))} -> cefal::detail::ValidInnerTypeTransformationFrom<CleanT>;
 };
 // clang-format on
 } // namespace concepts
