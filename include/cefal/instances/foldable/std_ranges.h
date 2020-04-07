@@ -40,15 +40,16 @@ struct Foldable<Src> {
     template <typename Input, typename Result, typename Func>
     static auto foldLeft(Input&& src, Result&& initial, Func&& func) {
         static_assert(std::is_same_v<Src, std::remove_cvref_t<Input>>, "Should be same type");
-        if constexpr (IsOwnedView_V<Src>) {
-            using CleanResult = std::remove_cvref_t<Result>;
-            CleanResult result = std::forward<Result>(initial);
-            for (auto&& x : src)
+        using CleanResult = std::remove_cvref_t<Result>;
+        CleanResult result = std::forward<Result>(initial);
+        for (auto&& x : std::forward<Src>(src)) {
+            if constexpr (IsOwnedView_V<Src>) {
                 result = func(std::move(result), std::move(x));
-            return result;
-        } else {
-            return std::accumulate(src.begin(), src.end(), std::forward<Result>(initial), std::forward<Func>(func));
+            } else {
+                result = func(std::move(result), x);
+            }
         }
+        return result;
     }
 };
 } // namespace instances

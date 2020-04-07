@@ -25,6 +25,8 @@
 
 #pragma once
 
+#include "cefal/detail/common_concepts.h"
+
 #include <ranges>
 
 namespace cefal {
@@ -41,8 +43,8 @@ private:
 public:
     OwnedView() = default;
     OwnedView(T t) : _base(std::move(t)) {}
-    constexpr auto begin() const { return std::ranges::begin(_base); }
-    constexpr auto end() const { return std::ranges::end(_base); }
+    constexpr auto begin() { return std::ranges::begin(_base); }
+    constexpr auto end() { return std::ranges::end(_base); }
 
     constexpr auto cbegin() const requires requires { std::ranges::cbegin(_base); }
     { return std::ranges::cbegin(_base); }

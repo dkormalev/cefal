@@ -101,7 +101,7 @@ TEMPLATE_TEST_CASE("ops::filter() - RValue", "", WithFunctions, TemplatedWithFun
     CHECK(Counter::custom("rvalue_filter") == 1);
 }
 
-TEMPLATE_TEST_CASE("ops::map() - LValue", "", WithFunctions, TemplatedWithFunctions<int>) {
+TEMPLATE_TEST_CASE("ops::filter() - LValue", "", WithFunctions, TemplatedWithFunctions<int>) {
     Counter::reset();
     const auto a = TestType(4);
     auto func = [](int x) -> bool { return true; };

@@ -25,7 +25,9 @@
 
 #pragma once
 
-#include "cefal/common.h"
+#include "cefal/helpers/inner_type.h"
+
+#include <concepts>
 
 namespace cefal::detail {
 template <typename To, typename From>

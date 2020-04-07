@@ -19,10 +19,12 @@ cefal_test(monoid with_functions)
 cefal_test(monoid std_containers)
 
 cefal_test(foldable with_functions)
+cefal_test(foldable std_ranges)
 cefal_test(foldable std_containers)
 
 cefal_test(functor from_foldable)
 cefal_test(functor std_optional)
+cefal_test(functor std_ranges)
 cefal_test(functor with_functions)
 
 cefal_test(monad from_foldable)
@@ -31,5 +33,6 @@ cefal_test(monad with_functions)
 
 cefal_test(filterable from_foldable)
 cefal_test(filterable std_optional)
+cefal_test(filterable std_ranges)
 cefal_test(filterable with_functions)
 

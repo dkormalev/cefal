@@ -33,14 +33,10 @@
 namespace cefal::instances {
 template <std::ranges::view Src>
 struct Filterable<Src> {
-    template <typename Func>
-    static auto filter(const Src& src, Func&& func) {
-        return src | std::views::filter(func);
-    }
-
-    template <typename Func>
-    static auto filter(Src&& src, Func&& func) {
-        return std::move(src) | std::views::filter(func);
+    template <typename Input, typename Func>
+    static auto filter(Input&& src, Func&& func) {
+        static_assert(std::is_same_v<Src, std::remove_cvref_t<Input>>, "Should be same type");
+        return std::forward<Input>(src) | std::views::filter(std::forward<Func>(func));
     }
 };
 } // namespace cefal::instances

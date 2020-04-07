@@ -68,7 +68,7 @@ TEST_CASE("ops::filter() - exists - false") {
     CHECK(!result);
 }
 
-TEST_CASE("ops::map() - nullopt") {
+TEST_CASE("ops::filter() - nullopt") {
     std::optional<std::string> result;
     bool called = false;
     auto func = [&called](const std::string& x) -> bool {
