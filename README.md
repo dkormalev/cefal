@@ -7,8 +7,6 @@ It is more a research pet project than a production-ready library (especially ke
 
 Tests exist though and [benchmarks](#performance) as well.
 
-Ranges are not used and/or supported due to their lack in any compiler at the current moment, but support for them is going to be seriously considered.
-
 See [examples](#examples) for general idea about what it looks like or check `src/dummy.cpp`.
 
 ### Dependencies
@@ -31,6 +29,7 @@ Has `foldLeft` function.
 
 #### Instances
  * `std_containers` - single socket std:: containers
+ * `std_ranges` - std::ranges::views
  * `with_functions` - any type that has `foldLeft` or `fold_left` method
 
 ### Functor
@@ -39,7 +38,8 @@ Has `unit` and `map` functions. Also provides `innerMap` function for Functor of
 #### Instances
  * `from_foldable` - types that have instances for Monoid and Foldable
  * `std_optional` - std::optional
- * `with_functions` - any type that has `unit` and `map` methods
+* `std_ranges` - std::ranges::views
+  * `with_functions` - any type that has `unit` and `map` methods
 
 ### Monad
 Has `flatMap` function and also is a Functor. Also provides `innerFlatMap` function for Functor of Monads.
@@ -55,6 +55,7 @@ Has `filter` function. Also provides `innerFilter` function for Functor of Filte
 #### Instances
  * `from_foldable` - types that have instances for Monoid and Foldable. Either SingletonFrom helper or Functor is also required.
  * `std_optional` - std::optional
+ * `std_ranges` - std::ranges::views
  * `with_functions` - any type that has `filter` method
 
 ## Usage
@@ -98,7 +99,7 @@ Filter benchmarks are also divided by percentage of items that are accepted.
 
 All values are from `mean` section of catch2 benchmarks.
 
-Std library is from GCC/master (commit 5c7e6d4bdf879b437b43037e10453275acabf521, March 12 2020) and all benchmarks are built with `-O3`.
+Std library is from GCC/master (commit 73dd051894b8293d35ea1c436fa408c404b80813, April 1 2020) and all benchmarks are built with `-O3`.
 
 ### map() for int
 Type            | vector   | list     | deque    | set      | unordered_set
@@ -187,7 +188,7 @@ Mutable std       | 174.427  | 160.743  | 129.702  | 67.049   | 26.729
 
 As a general conclusion: there are for sure few cases where cefal shows itself worse than direct usage of std algorithm (not tremendously though), but there are also a lot of cases where cefal works faster by 1-2 orders of magnitude (especially in case of move-efficient types) and in remaining cases it is on par with std.
 
-Cefal still lacks laziness though, but it can be fixed with ranges coming to std libraries.
+Cefal still lacks laziness though, but it can be achieved with `std::ranges` (cefal has partial support for them as `Foldable`, `Functor` and `Filterable`).
 
 ## Examples
 
