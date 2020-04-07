@@ -18,5 +18,7 @@ macro(cefal_benchmark dir target)
 endmacro()
 
 add_custom_target(run-benchmarks)
-cefal_benchmark(functor map)
-cefal_benchmark(filterable filter)
+
+cefal_benchmark(functor map_std_containers)
+
+cefal_benchmark(filterable filter_std_containers)
