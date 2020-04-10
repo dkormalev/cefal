@@ -39,12 +39,7 @@ struct Functor<Src> {
     template <typename Input, typename Func>
     static auto map(Input&& src, Func&& func) {
         static_assert(std::is_same_v<Src, std::remove_cvref_t<Input>>, "Should be same type");
-        if constexpr (IsOwnedView_V<Src>) {
-            return std::forward<Input>(src)
-                   | std::views::transform([func = std::forward<Func>(func)](auto&& x) { return func(std::move(x)); });
-        } else {
-            return std::forward<Input>(src) | std::views::transform(std::forward<Func>(func));
-        }
+        return std::forward<Input>(src) | std::views::transform(std::forward<Func>(func));
     }
 };
 } // namespace cefal::instances

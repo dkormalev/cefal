@@ -42,13 +42,8 @@ struct Foldable<Src> {
         static_assert(std::is_same_v<Src, std::remove_cvref_t<Input>>, "Should be same type");
         using CleanResult = std::remove_cvref_t<Result>;
         CleanResult result = std::forward<Result>(initial);
-        for (auto&& x : std::forward<Src>(src)) {
-            if constexpr (IsOwnedView_V<Src>) {
-                result = func(std::move(result), std::move(x));
-            } else {
-                result = func(std::move(result), x);
-            }
-        }
+        for (auto&& x : std::forward<Src>(src))
+            result = func(std::move(result), x);
         return result;
     }
 };

@@ -134,13 +134,6 @@ int main() {
                                                      });
     std::cout << rangeResult << std::endl;
 
-    std::string movableRangeResult = std::views::all(vec) | ops::ownView() | ops::ownView()
-                                                          | ops::map([](int x) {return x + 2;})
-                                                          | ops::filter([](int x) {return x % 2;})
-                                                          | ops::foldLeft(std::string(), [](std::string c, int x) {
-                                                                return std::move(c) + std::to_string(x);
-                                                            });
-    std::cout << movableRangeResult << std::endl;
 
     std::cout << getInt(42) << std::endl;
     std::cout << testOptional(3) << "; " <<  testOptional(2) << "; " <<  testOptional(std::nullopt) << std::endl;

@@ -38,7 +38,6 @@ using namespace cefal;
 
 template <typename... T>
 struct FromVector {
-    constexpr static bool movedBase = HasOp<Own, T...>::value && !HasOp<Transform, T...>::value;
     std::vector<std::string> base = {"1", "2", "3"};
     std::vector<int> result = HasOp<Reverse, T...>::value ? std::vector<int>{3, 2, 1} : std::vector<int>{1, 2, 3};
     auto get() { return (std::views::all(base) | ... | T()); }
@@ -46,7 +45,6 @@ struct FromVector {
 
 template <typename... T>
 struct FromSet {
-    constexpr static bool movedBase = false;
     std::set<std::string> base = {"1", "2", "3"};
     std::vector<int> result = HasOp<Reverse, T...>::value ? std::vector<int>{3, 2, 1} : std::vector<int>{1, 2, 3};
     auto get() { return (std::views::all(base) | ... | T()); }
@@ -54,27 +52,13 @@ struct FromSet {
 
 template <typename... T>
 struct FromSingle {
-    constexpr static bool movedBase = false;
     std::vector<int> result = {42};
     auto get() { return (std::views::single(std::string("42")) | ... | T()); }
 };
 
 TEMPLATE_PRODUCT_TEST_CASE("ops::map()", "", (FromVector, FromSet, FromSingle),
                            ((Transform), (Filter), (Take), (TakeWhile), (Drop), (DropWhile), (SplitAndJoin), (Reverse),
-
-                            (Transform, Own), (Filter, Own), (Take, Own), (TakeWhile, Own), (Drop, Own), (DropWhile, Own),
-                            (SplitAndJoin, Own), (Reverse, Own),
-
-                            (Own, Transform), (Own, Filter), (Own, Take), (Own, TakeWhile), (Own, Drop), (Own, DropWhile),
-                            (Own, SplitAndJoin), (Own, Reverse),
-
-                            (Transform, Filter, Take, TakeWhile), (Transform, Filter, Take, TakeWhile, Own),
-                            (Transform, Filter, Take, Own, TakeWhile), (Transform, Filter, Own, Take, TakeWhile),
-                            (Transform, Own, Filter, Take, TakeWhile), (Own, Transform, Filter, Take, TakeWhile),
-
-                            (Drop, Filter, Take, TakeWhile), (Drop, Filter, Take, TakeWhile, Own),
-                            (Drop, Filter, Take, Own, TakeWhile), (Drop, Filter, Own, Take, TakeWhile),
-                            (Drop, Own, Filter, Take, TakeWhile), (Own, Drop, Filter, Take, TakeWhile))) {
+                            (Transform, Filter, Take, TakeWhile), (Drop, Filter, Take, TakeWhile))) {
     TestType tester;
     std::vector<int> result;
     auto func = [](auto&& x) -> int {
@@ -92,9 +76,5 @@ TEMPLATE_PRODUCT_TEST_CASE("ops::map()", "", (FromVector, FromSet, FromSingle),
         SECTION("Curried") { result = materialize(ops::map(func)(std::move(left))); }
     }
 
-    if constexpr (TestType::movedBase) {
-        CHECK(tester.base.size() == 3);
-        CHECK(tester.base.begin()->empty());
-    }
     CHECK(result == tester.result);
 }

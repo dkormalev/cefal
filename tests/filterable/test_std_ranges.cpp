@@ -65,20 +65,7 @@ struct FromSingle {
 // Check after gcc release
 TEMPLATE_PRODUCT_TEST_CASE("ops::filter()", "", (FromVector, FromSet, FromSingle),
                            ((Transform), (Filter), (Take), (TakeWhile), (Drop), (DropWhile), (Reverse), //(SplitAndJoin),
-
-                            (Transform, Own), (Filter, Own), (Take, Own), (TakeWhile, Own), (Drop, Own), (DropWhile, Own),
-                            (Reverse, Own), /// (SplitAndJoin, Own),
-
-                            (Own, Transform), (Own, Filter), (Own, Take), (Own, TakeWhile), (Own, Drop), (Own, DropWhile),
-                            (Own, Reverse), // (Own, SplitAndJoin),
-
-                            (Transform, Filter, Take, TakeWhile), (Transform, Filter, Take, TakeWhile, Own),
-                            (Transform, Filter, Take, Own, TakeWhile), (Transform, Filter, Own, Take, TakeWhile),
-                            (Transform, Own, Filter, Take, TakeWhile), (Own, Transform, Filter, Take, TakeWhile),
-
-                            (Drop, Filter, Take, TakeWhile), (Drop, Filter, Take, TakeWhile, Own),
-                            (Drop, Filter, Take, Own, TakeWhile), (Drop, Filter, Own, Take, TakeWhile),
-                            (Drop, Own, Filter, Take, TakeWhile), (Own, Drop, Filter, Take, TakeWhile))) {
+                            (Transform, Filter, Take, TakeWhile), (Drop, Filter, Take, TakeWhile))) {
     TestType tester;
     std::vector<std::string> result;
     auto func = [](const std::string& x) -> bool { return std::stoi(x) % 2; };

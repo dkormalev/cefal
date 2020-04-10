@@ -77,12 +77,6 @@ struct Reverse {
         return std::views::reverse(std::forward<T>(prev));
     }
 };
-struct Own {
-    template <typename T>
-    friend auto operator|(T&& prev, Own) {
-        return std::forward<T>(prev) | cefal::ops::ownView();
-    }
-};
 
 template <typename... T>
 struct HasOp;
