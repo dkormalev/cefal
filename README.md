@@ -67,10 +67,20 @@ All instances should be implemented in `cefal::instances` namespace.
 
 All operations are in `cefal::ops` namespace and can be used either through pipe operator or with currying.
 
+### Lvalue vs rvalue
+All operations on lvalue operands expect constref arguments of functions, passed to them (except accumulator for foldLeft, which is rvalue).
+
+All operations on rvalue operands can work with rvalue as well.
+
+The only exception is operations on ranges. They are done in compliance with how ranges work and on both lvalue and rvalue expect either constref or ref (from where it is possible to move).
+Be aware though that moving from ranges operation sometimes can be more expensive than copying due to extensive optimizations compilers could do on ranges. For example, check mutable vs immutable benchmarks for `map()` on ranges for case when it works with `Expensive<int>` and converts it to different type. On `-O3` level immutable benchmark is faster roughly 2-3 times.
+
 ## Performance
 Due to cefal being mostly a wrapper around std or user implementations - overhead should be minimal.
 
 For std::containers and map/filter operations few non-pure optimizations are in place to provide performance similar to using `std` algorithms. Cefal also contains Catch2-based benchmarks for std::containers as for something that can be both heavy enough to process and comparable with other implementation (`std` algorithms).
+
+Ranges-based benchmarks are available as well, but their numbers are not presented below due to being the same across `std::ranges::views` and `cefal::ops`.
 
 For benchmarks we use next value types:
  * int - as an example of lightweight type without any extra memory allocations
