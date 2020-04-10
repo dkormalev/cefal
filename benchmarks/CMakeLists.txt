@@ -20,5 +20,7 @@ endmacro()
 add_custom_target(run-benchmarks)
 
 cefal_benchmark(functor map_std_containers)
+cefal_benchmark(functor map_std_ranges)
 
 cefal_benchmark(filterable filter_std_containers)
+cefal_benchmark(filterable filter_std_ranges)

@@ -39,9 +39,10 @@ struct Expensive {
     Expensive(Expensive&& other) {
         payload = other.payload;
         value = std::move(other.value);
-        other.payload = 0;
+        other.payload = nullptr;
     }
     Expensive& operator=(const Expensive& other) {
+        delete[] payload;
         payload = new char[102400];
         value = other.value;
         return *this;
@@ -49,7 +50,7 @@ struct Expensive {
     Expensive& operator=(Expensive&& other) {
         payload = other.payload;
         value = std::move(other.value);
-        other.payload = 0;
+        other.payload = nullptr;
         return *this;
     }
     ~Expensive() { delete[] payload; }
@@ -68,20 +69,15 @@ struct Expensive {
 
     template <typename U>
     Expensive<std::remove_cvref_t<U>> operator+(U&& other) && {
-        // if constexpr (std::is_same_v<std::remove_cvref_t<U>, T>) {
-        //     value += other;
-        //     return std::move(*this);
-        // } else {
         auto result = Expensive<std::remove_cvref_t<U>>(value + other, std::move(payload));
-        payload = 0;
+        payload = nullptr;
         return result;
-        // }
     }
 
     auto operator<=>(const Expensive<T>& other) const { return value <=> other.value; }
     bool operator==(const Expensive<T>& other) const { return std::abs(value - other.value) < 0.0001; }
 
-    char* payload;
+    char* payload = nullptr;
     T value = T();
 };
 
