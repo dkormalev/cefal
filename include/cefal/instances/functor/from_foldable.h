@@ -64,8 +64,43 @@ private:
     using T = InnerType_T<Src>;
 
 public:
-    static Src unit(const T& x) { return Src{x}; }
-    static Src unit(T&& x) { return Src{std::move(x)}; }
+    template <typename Input>
+    static Src unit(Input&& x) {
+        static_assert(std::is_convertible_v<std::remove_cvref_t<Input>, T>, "Should be same type");
+        return Src{static_cast<T>(std::forward<Input>(x))};
+    }
+
+    template <typename K, typename V>
+    // clang-format off
+    requires cefal::detail::DoubleSocketedStdContainer<Src>
+        // clang-format on
+        static Src unit(const std::pair<K, V>& x) {
+        return Src{{x.first, x.second}};
+    }
+
+    template <typename K, typename V>
+    // clang-format off
+    requires cefal::detail::DoubleSocketedStdContainer<Src>
+        // clang-format on
+        static Src unit(std::pair<K, V>&& x) {
+        return Src{{std::move(x.first), std::move(x.second)}};
+    }
+
+    template <typename K, typename V>
+    // clang-format off
+    requires cefal::detail::DoubleSocketedStdContainer<Src>
+        // clang-format on
+        static Src unit(const std::tuple<K, V>& x) {
+        return Src{{std::get<0>(x), std::get<1>(x)}};
+    }
+
+    template <typename K, typename V>
+    // clang-format off
+    requires cefal::detail::DoubleSocketedStdContainer<Src>
+        // clang-format on
+        static Src unit(std::tuple<K, V>&& x) {
+        return Src{{std::move(std::get<0>(x)), std::move(std::get<1>(x))}};
+    }
 
     template <typename Input, typename Func>
     // clang-format off
@@ -87,10 +122,13 @@ public:
     requires concepts::SingletonEnabledMonoid<Src>
         // clang-format on
         static auto map(const Src& src, Func&& func) {
+        using ConstT = ConstInnerType_T<Src>;
         using Dest = WithInnerType_T<Src, std::invoke_result_t<Func, T>>;
-        return src | ops::foldLeft(detail::createMapDestination<Dest>(src), [func = std::forward<Func>(func)](Dest&& l, const T& r) {
-                   return std::move(l) | ops::append(helpers::SingletonFrom<Dest>{func(r)});
-               });
+        return src
+               | ops::foldLeft(detail::createMapDestination<Dest>(src),
+                               [func = std::forward<Func>(func)](Dest&& l, const ConstT& r) {
+                                   return std::move(l) | ops::append(helpers::SingletonFrom<Dest>{func(r)});
+                               });
     }
 
     template <typename Func>

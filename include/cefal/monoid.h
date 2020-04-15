@@ -65,10 +65,10 @@ requires(CleanT x1, CleanT x2) {
     { instances::Monoid<CleanT>::append(std::move(x1), std::move(x2)) } -> std::same_as<CleanT>;
 };
 
-template <typename T, typename InnerT = InnerType_T<std::remove_cvref_t<T>>, typename CleanT = std::remove_cvref_t<T>>
+template <typename T, typename CleanT = std::remove_cvref_t<T>, typename InnerT = InnerType_T<CleanT>>
 concept SingletonEnabledMonoid =
 Monoid<T> && requires (CleanT x, helpers::SingletonFrom<CleanT> wrapper) {
-    typename helpers::SingletonFrom<CleanT>::value_type;
+    typename helpers::SingletonFrom<CleanT>::exists;
     { instances::Monoid<CleanT>::append(std::move(x), std::move(wrapper)) } -> std::same_as<CleanT>;
 };
 // clang-format on

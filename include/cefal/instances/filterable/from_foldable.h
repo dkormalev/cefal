@@ -70,7 +70,7 @@ requires concepts::Foldable<Src> && concepts::Monoid<Src> && (!detail::HasFilter
 // clang-format on
 struct Filterable<Src> {
 private:
-    using T = InnerType_T<Src>;
+    using T = ConstInnerType_T<Src>;
 
 public:
     template <typename Input, typename Func>
@@ -80,7 +80,7 @@ public:
     static auto filter(Input&& src, Func&& func) {
         return std::forward<Input>(src)
                | ops::foldLeft(ops::empty<Src>(), [func = std::forward<Func>(func)]<typename T2>(Src&& l, T2&& r) {
-                     if (!func(r))
+                     if (!func(static_cast<T>(r)))
                          return std::move(l);
                      return std::move(l) | ops::append(ops::unit<Src>(std::forward<T2>(r)));
                  });
@@ -93,9 +93,8 @@ public:
     requires concepts::SingletonEnabledMonoid<Src>
         // clang-format on
         static auto filter(const Src& src, Func&& func) {
-        using Dest = WithInnerType_T<Src, std::invoke_result_t<Func, T>>;
         return src | ops::foldLeft(ops::empty<Src>(), [func = std::forward<Func>(func)](Src&& l, const T& r) {
-                   if (!func(r))
+                   if (!func(static_cast<T>(r)))
                        return std::move(l);
                    return std::move(l) | ops::append(helpers::SingletonFrom<Src>{r});
                });
@@ -106,9 +105,8 @@ public:
     requires concepts::SingletonEnabledMonoid<Src>
         // clang-format on
         static auto filter(Src&& src, Func&& func) {
-        using Dest = WithInnerType_T<Src, std::invoke_result_t<Func, T>>;
         return std::move(src) | ops::foldLeft(ops::empty<Src>(), [func = std::forward<Func>(func)](Src&& l, T&& r) {
-                   if (!func(r))
+                   if (!func(static_cast<T>(r)))
                        return std::move(l);
                    return std::move(l) | ops::append(helpers::SingletonFrom<Src>{std::move(r)});
                });

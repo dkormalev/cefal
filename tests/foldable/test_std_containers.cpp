@@ -87,3 +87,29 @@ TEMPLATE_PRODUCT_TEST_CASE("ops::foldLeft()", "",
 
     CHECK(result == expected);
 }
+
+TEMPLATE_PRODUCT_TEST_CASE("ops::foldLeft()", "", (std::map, std::unordered_map, std::multimap, std::unordered_multimap),
+                           ((std::string, int))) {
+    std::string result;
+    std::string expected = "result=";
+    for (auto&& x : TestType{{"abc", 1}, {"de", 2}, {"f", 3}})
+        expected += x.first + std::string(' ', x.second);
+    SECTION("Lvalue") {
+        auto folder = [](std::string&& s, const std::tuple<const std::string&, int>& x) {
+            return std::move(s) + std::get<0>(x) + std::string(' ', std::get<1>(x));
+        };
+        const auto left = TestType{{"abc", 1}, {"de", 2}, {"f", 3}};
+        SECTION("Pipe") { result = left | ops::foldLeft(std::string("result="), folder); }
+        SECTION("Curried") { result = ops::foldLeft(std::string("result="), folder)(left); }
+    }
+    SECTION("Rvalue") {
+        auto folder = [](std::string&& s, std::tuple<std::string&, int>&& x) {
+            return std::move(s) + std::move(std::get<0>(x)) + std::string(' ', std::get<1>(x));
+        };
+        auto left = TestType{{"abc", 1}, {"de", 2}, {"f", 3}};
+        SECTION("Pipe") { result = std::move(left) | ops::foldLeft(std::string("result="), folder); }
+        SECTION("Curried") { result = ops::foldLeft(std::string("result="), folder)(std::move(left)); }
+    }
+
+    CHECK(result == expected);
+}

@@ -91,6 +91,30 @@ TEMPLATE_PRODUCT_TEST_CASE("ops::flatMap()", "",
     CHECK(result == WithInnerType_T<TestType, int>{1, 2, 3});
 }
 
+TEMPLATE_PRODUCT_TEST_CASE("ops::flatMap()", "", (std::map, std::unordered_map, std::multimap, std::unordered_multimap),
+                           ((std::string, int))) {
+    using DestType = WithInnerType_T<TestType, std::pair<int, std::string>>;
+    DestType result;
+    SECTION("Lvalue") {
+        auto func = [](const std::tuple<const std::string&, int>& x) {
+            return DestType{{std::get<1>(x), std::get<0>(x)}, {std::get<1>(x) * 10, std::get<0>(x)}};
+        };
+        const auto left = TestType{{"abc", 1}, {"de", 2}, {"f", 3}};
+        SECTION("Pipe") { result = left | ops::flatMap(func); }
+        SECTION("Curried") { result = ops::flatMap(func)(left); }
+    }
+    SECTION("Rvalue") {
+        auto func = [](std::tuple<std::string&, int>&& x) {
+            return DestType{{std::get<1>(x), std::get<0>(x)}, {std::get<1>(x) * 10, std::get<0>(x)}};
+        };
+        auto left = TestType{{"abc", 1}, {"de", 2}, {"f", 3}};
+        SECTION("Pipe") { result = std::move(left) | ops::flatMap(func); }
+        SECTION("Curried") { result = ops::flatMap(func)(std::move(left)); }
+    }
+
+    CHECK(result == DestType{{1, "abc"}, {2, "de"}, {3, "f"}, {10, "abc"}, {20, "de"}, {30, "f"}});
+}
+
 TEST_CASE("ops::flatMap() - TemplatedWithFunctions<std::string>") {
     TemplatedWithFunctions<int> result;
     SECTION("Lvalue") {

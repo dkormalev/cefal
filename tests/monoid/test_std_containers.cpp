@@ -46,6 +46,12 @@ TEMPLATE_PRODUCT_TEST_CASE("ops::empty()", "",
     CHECK(result.empty());
 }
 
+TEMPLATE_PRODUCT_TEST_CASE("ops::empty()", "", (std::map, std::unordered_map, std::multimap, std::unordered_multimap),
+                           ((std::string, int))) {
+    TestType result = ops::empty<TestType>();
+    CHECK(result.empty());
+}
+
 TEMPLATE_PRODUCT_TEST_CASE("ops::append() - Both", "",
                            (std::vector, std::list, std::deque, std::set, std::unordered_set, std::multiset,
                             std::unordered_multiset),
@@ -75,6 +81,33 @@ TEMPLATE_PRODUCT_TEST_CASE("ops::append() - Both", "",
     CHECK(result == TestType{createValue<InnerType>(1), createValue<InnerType>(2)});
 }
 
+TEMPLATE_PRODUCT_TEST_CASE("ops::append() - Both", "", (std::map, std::unordered_map, std::multimap, std::unordered_multimap),
+                           ((std::string, int))) {
+    using InnerType = typename TestType::value_type;
+    TestType result;
+    SECTION("Lvalue - LValue") {
+        const auto left = TestType{{"abc", 1}};
+        const auto right = TestType{{"cde", 2}};
+        result = left | ops::append(right);
+    }
+    SECTION("Lvalue - RValue") {
+        const auto left = TestType{{"abc", 1}};
+        auto right = TestType{{"cde", 2}};
+        result = left | ops::append(std::move(right));
+    }
+    SECTION("Rvalue - LValue") {
+        auto left = TestType{{"abc", 1}};
+        const auto right = TestType{{"cde", 2}};
+        result = std::move(left) | ops::append(right);
+    }
+    SECTION("Rvalue - RValue") {
+        auto left = TestType{{"abc", 1}};
+        auto right = TestType{{"cde", 2}};
+        result = std::move(left) | ops::append(std::move(right));
+    }
+    CHECK(result == TestType{{"abc", 1}, {"cde", 2}});
+}
+
 TEMPLATE_PRODUCT_TEST_CASE("ops::append() - Left", "",
                            (std::vector, std::list, std::deque, std::set, std::unordered_set, std::multiset,
                             std::unordered_multiset),
@@ -82,6 +115,13 @@ TEMPLATE_PRODUCT_TEST_CASE("ops::append() - Left", "",
     using InnerType = typename TestType::value_type;
     TestType result = TestType{createValue<InnerType>(1)} | ops::append(TestType());
     CHECK(result == TestType{createValue<InnerType>(1)});
+}
+
+TEMPLATE_PRODUCT_TEST_CASE("ops::append() - Left", "", (std::map, std::unordered_map, std::multimap, std::unordered_multimap),
+                           ((std::string, int))) {
+    using InnerType = typename TestType::value_type;
+    TestType result = TestType{{"abc", 1}} | ops::append(TestType());
+    CHECK(result == TestType{{"abc", 1}});
 }
 
 TEMPLATE_PRODUCT_TEST_CASE("ops::append() - Right", "",
@@ -93,10 +133,24 @@ TEMPLATE_PRODUCT_TEST_CASE("ops::append() - Right", "",
     CHECK(result == TestType{createValue<InnerType>(2)});
 }
 
+TEMPLATE_PRODUCT_TEST_CASE("ops::append() - Right", "", (std::map, std::unordered_map, std::multimap, std::unordered_multimap),
+                           ((std::string, int))) {
+    using InnerType = typename TestType::value_type;
+    TestType result = TestType() | ops::append(TestType{{"cde", 2}});
+    CHECK(result == TestType{{"cde", 2}});
+}
+
 TEMPLATE_PRODUCT_TEST_CASE("ops::append() - None", "",
                            (std::vector, std::list, std::deque, std::set, std::unordered_set, std::multiset,
                             std::unordered_multiset),
                            (int, std::string)) {
+    using InnerType = typename TestType::value_type;
+    TestType result = TestType() | ops::append(TestType());
+    REQUIRE(result.empty());
+}
+
+TEMPLATE_PRODUCT_TEST_CASE("ops::append() - None", "", (std::map, std::unordered_map, std::multimap, std::unordered_multimap),
+                           ((std::string, int))) {
     using InnerType = typename TestType::value_type;
     TestType result = TestType() | ops::append(TestType());
     REQUIRE(result.empty());

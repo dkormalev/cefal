@@ -65,4 +65,36 @@ struct Foldable<Src> {
         return result;
     }
 };
+
+template <cefal::detail::DoubleSocketedStdContainer Src>
+struct Foldable<Src> {
+    template <typename Result, typename Func>
+    static auto foldLeft(const Src& src, Result&& initial, Func&& func) {
+        using CleanResult = std::remove_cvref_t<Result>;
+        CleanResult result = std::forward<Result>(initial);
+        for (const auto& x : src)
+            result = func(std::move(result), std::forward_as_tuple(x.first, x.second));
+        return result;
+    }
+
+    template <typename Result, typename Func>
+    static auto foldLeft(Src&& src, Result&& initial, Func&& func) {
+        using CleanResult = std::remove_cvref_t<Result>;
+        using InnerT = typename Src::value_type;
+        using KeyT = std::tuple_element_t<0, InnerT>;
+        CleanResult result = std::forward<Result>(initial);
+        if constexpr (std::is_trivial_v<KeyT> && sizeof(KeyT) <= 8) {
+            for (auto& x : src) {
+                KeyT key = x.first;
+                result = func(std::move(result), std::forward_as_tuple(key, x.second));
+            }
+        } else {
+            while (!src.empty()) {
+                auto node = src.extract(src.begin());
+                result = func(std::move(result), std::forward_as_tuple(node.key(), node.mapped()));
+            }
+        }
+        return result;
+    }
+};
 } // namespace cefal::instances

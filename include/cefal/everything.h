@@ -25,6 +25,9 @@
 
 #include "cefal/cefal"
 
+#include "cefal/helpers/std_containers.h"
+#include "cefal/helpers/std_ranges.h"
+
 #include "cefal/instances/filterable/from_foldable.h"
 #include "cefal/instances/filterable/std_optional.h"
 #include "cefal/instances/filterable/std_ranges.h"

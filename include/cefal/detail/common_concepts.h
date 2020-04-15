@@ -37,14 +37,6 @@ struct IsValidInnerTypeTransformation {
 template <typename To, typename From>
 constexpr inline bool IsValidInnerTypeTransformation_V = IsValidInnerTypeTransformation<To, From>::value;
 
-// clang-format off
-template<typename To, typename From>
+template <typename To, typename From>
 concept ValidInnerTypeTransformationFrom = IsValidInnerTypeTransformation_V<To, From>;
-
-template<typename C>
-concept SingleSocketed = requires {
-  typename InnerType<C>;
-  typename WithInnerType<C, int>;
-};
-// clang-format on
 } // namespace cefal::detail

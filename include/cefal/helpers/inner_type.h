@@ -42,6 +42,13 @@ struct InnerType {
 template <typename T>
 using InnerType_T = InnerType<T>::type;
 
+template <typename T>
+struct ConstInnerType {
+    using type = InnerType<T>::type;
+};
+template <typename T>
+using ConstInnerType_T = ConstInnerType<T>::type;
+
 template <typename...>
 struct WithInnerType;
 template <template <typename...> typename C, typename T, typename... Ts, typename NewT>

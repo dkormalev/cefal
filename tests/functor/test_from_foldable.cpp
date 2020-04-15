@@ -79,6 +79,16 @@ TEMPLATE_PRODUCT_TEST_CASE("ops::unit()", "",
     CHECK(*result.begin() == 42);
 }
 
+TEMPLATE_PRODUCT_TEST_CASE("ops::unit()", "", (std::map, std::unordered_map, std::multimap, std::unordered_multimap),
+                           ((std::string, int))) {
+    TestType result;
+    SECTION("pair") { result = ops::unit<TestType>(std::make_pair(std::string("abc"), 42)); }
+    SECTION("tuple") { result = ops::unit<TestType>(std::make_tuple(std::string("abc"), 42)); }
+    REQUIRE(result.size() == 1);
+    CHECK(result.begin()->first == "abc");
+    CHECK(result.begin()->second == 42);
+}
+
 TEST_CASE("ops::unit() - TemplatedWithFunctions<int>") {
     auto result = ops::unit<TemplatedWithFunctions>(42);
     CHECK(result.value == 42);
@@ -103,6 +113,25 @@ TEMPLATE_PRODUCT_TEST_CASE("ops::map()", "",
     }
 
     CHECK(result == WithInnerType_T<TestType, int>{1, 2, 3});
+}
+
+TEMPLATE_PRODUCT_TEST_CASE("ops::map()", "", (std::map, std::unordered_map, std::multimap, std::unordered_multimap),
+                           ((std::string, int))) {
+    WithInnerType_T<TestType, std::tuple<int, std::string>> result;
+    SECTION("Lvalue") {
+        auto func = [](const std::tuple<const std::string&, int>& x) { return make_tuple(std::get<1>(x), std::get<0>(x)); };
+        const auto left = TestType{{"abc", 1}, {"de", 2}, {"f", 3}};
+        SECTION("Pipe") { result = left | ops::map(func); }
+        SECTION("Curried") { result = ops::map(func)(left); }
+    }
+    SECTION("Rvalue") {
+        auto func = [](std::tuple<std::string&, int>&& x) { return make_tuple(std::get<1>(x), std::move(std::get<0>(x))); };
+        auto left = TestType{{"abc", 1}, {"de", 2}, {"f", 3}};
+        SECTION("Pipe") { result = std::move(left) | ops::map(func); }
+        SECTION("Curried") { result = ops::map(func)(std::move(left)); }
+    }
+
+    CHECK(result == WithInnerType_T<TestType, std::tuple<int, std::string>>{{1, "abc"}, {2, "de"}, {3, "f"}});
 }
 
 TEST_CASE("ops::map() - TemplatedWithFunctions<std::string>") {

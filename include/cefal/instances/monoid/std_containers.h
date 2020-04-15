@@ -36,8 +36,17 @@ namespace cefal {
 namespace helpers {
 template <cefal::detail::SingleSocketedStdContainer Src>
 struct SingletonFrom<Src> {
-    using value_type = typename Src::value_type;
-    value_type value;
+    using exists = void;
+    typename Src::value_type value;
+};
+
+template <cefal::detail::DoubleSocketedStdContainer Src>
+struct SingletonFrom<Src> {
+    using exists = void;
+    SingletonFrom(const ConstInnerType_T<Src>& x) : key(std::get<0>(x)), value(std::get<1>(x)) {}
+    SingletonFrom(InnerType_T<Src> x) : key(std::move(std::get<0>(x))), value(std::move(std::get<1>(x))) {}
+    typename Src::key_type key;
+    typename Src::mapped_type value;
 };
 } // namespace helpers
 
@@ -131,6 +140,28 @@ struct Monoid<Src> {
         static_assert(std::is_same_v<std::remove_cvref_t<T>, Src>, "Argument type should be the same as monoid");
         Src result = std::forward<T>(left);
         result.insert(std::move(right.value));
+        return result;
+    }
+};
+
+template <cefal::detail::DoubleSocketedStdContainer Src>
+struct Monoid<Src> {
+    static Src empty() { return Src(); }
+
+    template <typename T1, typename T2>
+    static Src append(T1&& left, T2&& right) {
+        static_assert(std::is_same_v<std::remove_cvref_t<T1>, Src>, "Argument type should be the same as monoid");
+        static_assert(std::is_same_v<std::remove_cvref_t<T2>, Src>, "Argument type should be the same as monoid");
+        Src result = std::forward<T1>(left);
+        result.merge(std::forward<T2>(right));
+        return result;
+    }
+
+    template <typename T>
+    static Src append(T&& left, helpers::SingletonFrom<Src>&& right) {
+        static_assert(std::is_same_v<std::remove_cvref_t<T>, Src>, "Argument type should be the same as monoid");
+        Src result = std::forward<T>(left);
+        result.emplace(std::move(right.key), std::move(right.value));
         return result;
     }
 };

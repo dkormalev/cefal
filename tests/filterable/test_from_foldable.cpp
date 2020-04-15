@@ -140,6 +140,24 @@ TEMPLATE_PRODUCT_TEST_CASE("ops::filter()", "",
     CHECK(result == TestType{"1", "3"});
 }
 
+TEMPLATE_PRODUCT_TEST_CASE("ops::filter()", "", (std::map, std::unordered_map, std::multimap, std::unordered_multimap),
+                           ((std::string, int))) {
+    TestType result;
+    auto func = [](const std::tuple<const std::string&, int>& x) { return std::get<1>(x) % 2; };
+    SECTION("Lvalue") {
+        const auto left = TestType{{"abc", 1}, {"de", 2}, {"f", 3}};
+        SECTION("Pipe") { result = left | ops::filter(func); }
+        SECTION("Curried") { result = ops::filter(func)(left); }
+    }
+    SECTION("Rvalue") {
+        auto left = TestType{{"abc", 1}, {"de", 2}, {"f", 3}};
+        SECTION("Pipe") { result = std::move(left) | ops::filter(func); }
+        SECTION("Curried") { result = ops::filter(func)(std::move(left)); }
+    }
+
+    CHECK(result == TestType{{"abc", 1}, {"f", 3}});
+}
+
 TEMPLATE_TEST_CASE("ops::filter()", "", TemplatedWithFunctions<std::string>, TemplatedWithFunctionsWithSingleton<std::string>) {
     TestType result;
     auto func = [](const std::string& s) { return true; };

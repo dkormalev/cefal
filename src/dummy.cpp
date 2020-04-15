@@ -1,5 +1,7 @@
 #include "cefal/everything.h"
 
+#include <cefal/helpers/std_containers.h>
+
 #include <iostream>
 #include <set>
 #include <unordered_set>
@@ -123,6 +125,26 @@ struct ContainerTester {
 };
 
 int main() {
+    std::multimap<std::string, int> m {{"12", 34}, {"56", 78}};
+    std::string mapResult1 = m | ops::foldLeft(std::string(), [](std::string c, auto&& x) {
+                                    return std::move(c) + std::get<0>(x) + std::to_string(std::get<1>(x)) + " | ";
+                                 });
+    std::cout << mapResult1 << std::endl;
+
+    std::multimap<std::string, int> mSum = m | ops::append(m);
+
+    std::string mapResult = m | ops::map([](auto&& x) {return std::make_tuple(std::get<0>(x), std::to_string(std::get<1>(x)));})
+                              | ops::foldLeft(std::string(), [](std::string c, auto&& x) {
+                                    return std::move(c) + std::get<0>(x) + std::get<1>(x) + " | ";
+                                });
+    std::cout << mapResult << std::endl;
+
+    mapResult = std::move(m) | ops::map([](auto&& x) {return std::make_tuple(std::get<0>(x), std::to_string(std::get<1>(x)));})
+                             | ops::foldLeft(std::string(), [](std::string c, auto&& x) {
+                                    return std::move(c) + std::get<0>(x) + std::get<1>(x) + " | ";
+                               });
+    std::cout << mapResult << std::endl;
+
     std::set<int> vec = {1, 2, 3};
     for (int x : std::views::all(vec))
         std::cout << x << " ";

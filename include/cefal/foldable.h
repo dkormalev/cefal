@@ -58,10 +58,11 @@ concept HasFoldableSnakeCaseMethods = requires(T x, InnerT initial, std::functio
 
 namespace concepts {
 // clang-format off
-template <typename T, typename InnerT = InnerType_T<std::remove_cvref_t<T>>, typename CleanT = std::remove_cvref_t<T>>
+template <typename T, typename CleanT = std::remove_cvref_t<T>, typename InnerT = InnerType_T<CleanT>,
+          typename ConstInnerT = ConstInnerType_T<CleanT>>
 concept Foldable =
-requires(CleanT x, InnerT init, std::function<InnerT(InnerT, InnerT)> converter) {
-    { instances::Foldable<CleanT>::foldLeft(x, init, std::move(converter)) } -> std::same_as<InnerT>;
+requires(CleanT x, InnerT init, std::function<InnerT(InnerT, InnerT)> converter, std::function<InnerT(InnerT, ConstInnerT)> constConverter) {
+    { instances::Foldable<CleanT>::foldLeft(x, init, std::move(constConverter)) } -> std::same_as<InnerT>;
     { instances::Foldable<CleanT>::foldLeft(std::move(x), std::move(init), std::move(converter)) } -> std::same_as<InnerT>;
 };
 // clang-format on

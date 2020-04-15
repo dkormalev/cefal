@@ -46,7 +46,17 @@ concept StdContainer = requires (C c) {
 };
 
 template<typename C>
-concept SingleSocketedStdContainer = SingleSocketed<C> && StdContainer<C>;
+concept SingleSocketedStdContainer = StdContainer<C> && requires (C c, InnerType_T<C> value) {
+    {*std::begin(c)} -> std::convertible_to<InnerType_T<C>>;
+    C {value, value, value};
+};
+
+template<typename C>
+concept DoubleSocketedStdContainer =
+StdContainer<C> && requires (C c, typename C::value_type rawValue, typename C::key_type key, typename C::mapped_type mapped) {
+    {rawValue} -> std::convertible_to<std::pair<const typename C::key_type, typename C::mapped_type>>;
+    C {{key, mapped}, {key, mapped}, {key, mapped}};
+};
 
 template<typename C>
 concept SetLikeContainer = SingleSocketedStdContainer<C> && requires (C c, InnerType_T<C> value) {
