@@ -81,7 +81,7 @@ struct Foldable<Src> {
     static auto foldLeft(Src&& src, Result&& initial, Func&& func) {
         using CleanResult = std::remove_cvref_t<Result>;
         using InnerT = typename Src::value_type;
-        using KeyT = std::tuple_element_t<0, InnerT>;
+        using KeyT = std::remove_cvref_t<std::tuple_element_t<0, InnerT>>;
         CleanResult result = std::forward<Result>(initial);
         if constexpr (std::is_trivial_v<KeyT> && sizeof(KeyT) <= 8) {
             for (auto& x : src) {

@@ -86,8 +86,7 @@ concept StdRemoveIfable = SingleSocketedStdContainer<Src> && requires(Src src, F
 };
 
 template <typename Src>
-concept Erasable = SingleSocketedStdContainer<Src> && requires(Src src, InnerType_T<Src> value) {
-    {src.erase(value)};
+concept Erasable = requires(Src src, InnerType_T<Src> value) {
     {src.erase(src.begin())};
 };
 // clang-format on
