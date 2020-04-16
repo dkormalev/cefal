@@ -63,6 +63,15 @@ struct ContainerSize<C> {
     static constexpr size_t value = std::is_same_v<cefal::InnerType_T<C>, int> ? 100'000 : 25'000;
 };
 
+template <cefal::detail::DoubleSocketedStdContainer C>
+struct ContainerSize<C> {
+    static constexpr size_t value =
+        std::is_same_v<std::remove_cvref_t<std::tuple_element_t<0, cefal::InnerType_T<C>>>,
+                       int> && std::is_same_v<std::remove_cvref_t<std::tuple_element_t<1, cefal::InnerType_T<C>>>, int>
+            ? 100'000
+            : 25'000;
+};
+
 template <typename T>
 constexpr inline size_t ContainerSize_V = ContainerSize<T>::value;
 
@@ -161,6 +170,63 @@ TEMPLATE_PRODUCT_TEST_CASE("cefal::map() to same type", "",
     };
 }
 
+TEMPLATE_PRODUCT_TEST_CASE("cefal::map() to same type", "", (std::map, std::unordered_map),
+                           ((int, int), (int, Expensive<int>), (Expensive<int>, int))) {
+    using InnerType = cefal::InnerType_T<TestType>;
+    using DerefedInnerType =
+        std::tuple<std::remove_cvref_t<std::tuple_element_t<0, InnerType>>, std::remove_cvref_t<std::tuple_element_t<1, InnerType>>>;
+    BENCHMARK_ADVANCED("cefal::map() - immutable - x" + std::to_string(ContainerSize_V<TestType>))
+    (Catch::Benchmark::Chronometer meter) {
+        auto func = [](const auto& x) {
+            DerefedInnerType result = x;
+            std::get<1>(result) += 1;
+            return result;
+        };
+        auto seed = std::chrono::system_clock::now();
+        TestType src;
+        for (int j = 0; j < ContainerSize_V<TestType>; ++j)
+            src[seed.time_since_epoch().count() + j] = seed.time_since_epoch().count() + j + 1;
+        meter.measure([&src, &func] {
+            TestType dest = src | ops::map(func);
+            return dest.begin()->second + 1;
+        });
+    };
+
+    BENCHMARK_ADVANCED("std::transform() - immutable - x" + std::to_string(ContainerSize_V<TestType>))
+    (Catch::Benchmark::Chronometer meter) {
+        auto func = [](const auto& x) {
+            auto result = x;
+            result.second += 1;
+            return result;
+        };
+        auto seed = std::chrono::system_clock::now();
+        TestType src;
+        for (int j = 0; j < ContainerSize_V<TestType>; ++j)
+            src[seed.time_since_epoch().count() + j] = seed.time_since_epoch().count() + j + 1;
+        meter.measure([&src, &func] {
+            TestType dest;
+            std::transform(src.begin(), src.end(), std::inserter(dest, dest.end()), func);
+            return dest.begin()->second + 1;
+        });
+    };
+
+    BENCHMARK_ADVANCED("cefal::map() - mutable - x" + std::to_string(ContainerSize_V<TestType>))
+    (Catch::Benchmark::Chronometer meter) {
+        auto func = [](auto&& x) {
+            std::get<1>(x) += 1;
+            return std::move(x);
+        };
+        auto seed = std::chrono::system_clock::now();
+        TestType src;
+        for (int j = 0; j < ContainerSize_V<TestType>; ++j)
+            src[seed.time_since_epoch().count() + j] = seed.time_since_epoch().count() + j + 1;
+        meter.measure([&src, &func](int i) {
+            src = std::move(src) | ops::map(func);
+            return src.begin()->second + 1;
+        });
+    };
+}
+
 TEMPLATE_PRODUCT_TEST_CASE("cefal::map() to different type", "", (std::vector, std::list, std::deque), (int, Expensive<int>)) {
     auto func = []<typename T>(T&& x) { return std::forward<T>(x) + (double)1.0; };
     using Dest = WithInnerType_T<TestType, std::invoke_result_t<decltype(func), InnerType_T<TestType>>>;
@@ -246,6 +312,57 @@ TEMPLATE_PRODUCT_TEST_CASE("cefal::map() to different type", "",
         meter.measure([&src, &func](int i) {
             auto dest = std::move(src[i]) | ops::map(func);
             return *dest.begin();
+        });
+    };
+}
+
+TEMPLATE_PRODUCT_TEST_CASE("cefal::map() to different type", "", (std::map, std::unordered_map),
+                           ((int, int), (int, Expensive<int>), (Expensive<int>, int))) {
+    using InnerType = cefal::InnerType_T<TestType>;
+    using DerefedInnerType =
+        std::tuple<std::remove_cvref_t<std::tuple_element_t<0, InnerType>>, std::remove_cvref_t<std::tuple_element_t<1, InnerType>>>;
+    BENCHMARK_ADVANCED("cefal::map() - immutable - x" + std::to_string(ContainerSize_V<TestType>))
+    (Catch::Benchmark::Chronometer meter) {
+        auto func = [](const auto& x) { return std::make_tuple(std::get<0>(x), std::get<1>(x) + (double)1.0); };
+        using Dest = WithInnerType_T<TestType, std::invoke_result_t<decltype(func), InnerType_T<TestType>>>;
+        auto seed = std::chrono::system_clock::now();
+        TestType src;
+        for (int j = 0; j < ContainerSize_V<TestType>; ++j)
+            src[seed.time_since_epoch().count() + j] = seed.time_since_epoch().count() + j + 1;
+        meter.measure([&src, &func] {
+            Dest dest = src | ops::map(func);
+            return dest.begin()->second + 1;
+        });
+    };
+
+    BENCHMARK_ADVANCED("std::transform() - immutable - x" + std::to_string(ContainerSize_V<TestType>))
+    (Catch::Benchmark::Chronometer meter) {
+        auto func = [](const auto& x) { return std::make_pair(x.first, x.second + (double)1.0); };
+        using Dest = WithInnerType_T<TestType, std::invoke_result_t<decltype(func), typename TestType::value_type>>;
+        auto seed = std::chrono::system_clock::now();
+        TestType src;
+        for (int j = 0; j < ContainerSize_V<TestType>; ++j)
+            src[seed.time_since_epoch().count() + j] = seed.time_since_epoch().count() + j + 1;
+        meter.measure([&src, &func] {
+            Dest dest;
+            std::transform(src.begin(), src.end(), std::inserter(dest, dest.end()), func);
+            return dest.begin()->second + 1;
+        });
+    };
+
+    BENCHMARK_ADVANCED("cefal::map() - mutable - x" + std::to_string(ContainerSize_V<TestType>))
+    (Catch::Benchmark::Chronometer meter) {
+        auto func = [](auto&& x) { return std::make_tuple(std::move(std::get<0>(x)), std::move(std::get<1>(x)) + (double)1.0); };
+        using Dest = WithInnerType_T<TestType, std::invoke_result_t<decltype(func), InnerType_T<TestType>>>;
+        auto seed = std::chrono::system_clock::now();
+        std::vector<TestType> src(meter.runs());
+        for (auto&& x : src) {
+            for (int j = 0; j < ContainerSize_V<TestType>; ++j)
+                x[seed.time_since_epoch().count() + j] = seed.time_since_epoch().count() + j + 1;
+        }
+        meter.measure([&src, &func](int i) {
+            Dest dest = std::move(src[i]) | ops::map(func);
+            return dest.begin()->second + 1;
         });
     };
 }

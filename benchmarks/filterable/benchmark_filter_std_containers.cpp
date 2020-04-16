@@ -63,6 +63,15 @@ struct ContainerSize<C> {
     static constexpr size_t value = std::is_same_v<cefal::InnerType_T<C>, int> ? 100'000 : 25'000;
 };
 
+template <cefal::detail::DoubleSocketedStdContainer C>
+struct ContainerSize<C> {
+    static constexpr size_t value =
+        std::is_same_v<std::remove_cvref_t<std::tuple_element_t<0, cefal::InnerType_T<C>>>,
+                       int> && std::is_same_v<std::remove_cvref_t<std::tuple_element_t<1, cefal::InnerType_T<C>>>, int>
+            ? 100'000
+            : 25'000;
+};
+
 template <typename T>
 constexpr inline size_t ContainerSize_V = ContainerSize<T>::value;
 
@@ -144,6 +153,97 @@ TEMPLATE_PRODUCT_TEST_CASE("cefal::filter()", "",
                     x = std::move(x)
                         | ops::append(
                             helpers::SingletonFrom<TestType>{cefal::InnerType_T<TestType>(seed.time_since_epoch().count() + j)});
+                }
+            }
+            meter.measure([&src, &funcReverse](int i) {
+                std::erase_if(src[i], funcReverse);
+                return *src[i].begin();
+            });
+        };
+    }
+}
+
+TEMPLATE_PRODUCT_TEST_CASE("cefal::filter()", "", (std::map, std::unordered_map),
+                           ((int, int), (int, Expensive<int>), (Expensive<int>, int))) {
+    const std::vector<std::tuple<int, bool, std::string>> descriptors = {{10, false, "10%"},
+                                                                         {4, false, "25%"},
+                                                                         {2, true, "50%"},
+                                                                         {4, true, "75%"},
+                                                                         {10, true, "90%"}};
+
+    using InnerType = cefal::InnerType_T<TestType>;
+    using DerefedInnerType =
+        std::tuple<std::remove_cvref_t<std::tuple_element_t<0, InnerType>>, std::remove_cvref_t<std::tuple_element_t<1, InnerType>>>;
+    using StdInnerType =
+        std::pair<std::remove_cvref_t<std::tuple_element_t<0, InnerType>>, std::remove_cvref_t<std::tuple_element_t<1, InnerType>>>;
+    for (auto&& [limit, keep, percentage] : descriptors) {
+        std::function<bool(const ConstInnerType_T<TestType>&)> func;
+        std::function<bool(const StdInnerType&)> funcReverse;
+        if (keep) {
+            func = [limit](const auto& x) -> bool { return std::get<0>(x) % limit; };
+            funcReverse = [limit](const auto& x) -> bool { return !(x.first % limit); };
+        } else {
+            func = [limit](const auto& x) -> bool { return !(std::get<0>(x) % limit); };
+            funcReverse = [limit](const auto& x) -> bool { return x.first % limit; };
+        }
+
+        BENCHMARK_ADVANCED("cefal::filter() - " + percentage + " kept - immutable - x" + std::to_string(ContainerSize_V<TestType>))
+        (Catch::Benchmark::Chronometer meter) {
+            auto seed = std::chrono::system_clock::now();
+            TestType src;
+            for (int j = 0; j < ContainerSize_V<TestType>; ++j) {
+                src = std::move(src)
+                      | ops::append(helpers::SingletonFrom<TestType>{
+                          DerefedInnerType(seed.time_since_epoch().count() + j, seed.time_since_epoch().count() + j + 1)});
+            }
+            meter.measure([&src, &func] {
+                TestType dest = src | ops::filter(func);
+                return *dest.begin();
+            });
+        };
+
+        BENCHMARK_ADVANCED("std::erase_if() - " + percentage + " kept - immutable - x" + std::to_string(ContainerSize_V<TestType>))
+        (Catch::Benchmark::Chronometer meter) {
+            auto seed = std::chrono::system_clock::now();
+            TestType src;
+            for (int j = 0; j < ContainerSize_V<TestType>; ++j) {
+                src = std::move(src)
+                      | ops::append(helpers::SingletonFrom<TestType>{
+                          DerefedInnerType(seed.time_since_epoch().count() + j, seed.time_since_epoch().count() + j + 1)});
+            }
+            meter.measure([&src, &funcReverse] {
+                auto dest = src;
+                std::erase_if(dest, funcReverse);
+                return *dest.begin();
+            });
+        };
+
+        BENCHMARK_ADVANCED("cefal::filter() - " + percentage + " kept - mutable - x" + std::to_string(ContainerSize_V<TestType>))
+        (Catch::Benchmark::Chronometer meter) {
+            auto seed = std::chrono::system_clock::now();
+            std::vector<TestType> src(meter.runs());
+            for (auto&& x : src) {
+                for (int j = 0; j < ContainerSize_V<TestType>; ++j) {
+                    x = std::move(x)
+                        | ops::append(helpers::SingletonFrom<TestType>{
+                            DerefedInnerType(seed.time_since_epoch().count() + j, seed.time_since_epoch().count() + j + 1)});
+                }
+            }
+            meter.measure([&src, &func](int i) {
+                src[i] = std::move(src[i]) | ops::filter(func);
+                return *src[i].begin();
+            });
+        };
+
+        BENCHMARK_ADVANCED("std::erase_if() - " + percentage + " kept - mutable - x" + std::to_string(ContainerSize_V<TestType>))
+        (Catch::Benchmark::Chronometer meter) {
+            auto seed = std::chrono::system_clock::now();
+            std::vector<TestType> src(meter.runs());
+            for (auto&& x : src) {
+                for (int j = 0; j < ContainerSize_V<TestType>; ++j) {
+                    x = std::move(x)
+                        | ops::append(helpers::SingletonFrom<TestType>{
+                            DerefedInnerType(seed.time_since_epoch().count() + j, seed.time_since_epoch().count() + j + 1)});
                 }
             }
             meter.measure([&src, &funcReverse](int i) {

@@ -30,7 +30,7 @@
 
 template <typename T>
 struct Expensive {
-    Expensive(T x) : value(std::move(x)), payload(new char[102400]) {}
+    Expensive(T x = T()) : value(std::move(x)), payload(new char[102400]) {}
     Expensive(T x, char* payload) : value(std::move(x)), payload(payload) {}
     Expensive(const Expensive& other) {
         payload = new char[102400];
@@ -48,9 +48,8 @@ struct Expensive {
         return *this;
     }
     Expensive& operator=(Expensive&& other) {
-        payload = other.payload;
+        std::swap(payload, other.payload);
         value = std::move(other.value);
-        other.payload = nullptr;
         return *this;
     }
     ~Expensive() { delete[] payload; }
@@ -69,16 +68,21 @@ struct Expensive {
 
     template <typename U>
     Expensive<std::remove_cvref_t<U>> operator+(U&& other) && {
-        auto result = Expensive<std::remove_cvref_t<U>>(value + other, std::move(payload));
+        auto result = Expensive<std::remove_cvref_t<U>>(value + other, payload);
         payload = nullptr;
         return result;
+    }
+
+    Expensive& operator+=(T other) {
+        value += other;
+        return *this;
     }
 
     auto operator<=>(const Expensive<T>& other) const { return value <=> other.value; }
     bool operator==(const Expensive<T>& other) const { return std::abs(value - other.value) < 0.0001; }
 
-    char* payload = nullptr;
     T value = T();
+    char* payload = nullptr;
 };
 
 namespace std {
