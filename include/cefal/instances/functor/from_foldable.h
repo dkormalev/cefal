@@ -179,5 +179,35 @@ public:
             return dest;
         }
     }
+
+    template <typename Func, typename Dest = WithInnerType_T<Src, std::invoke_result_t<Func, T>>>
+    // clang-format off
+    requires concepts::SingletonEnabledMonoid<Src> && cefal::detail::SetLikeContainer<Src> && std::same_as<Src, Dest>
+        // clang-format on
+        static auto map(Src&& src, Func&& func) {
+        auto dest = detail::createMapDestination<Dest>(src);
+        while (!src.empty()) {
+            auto node = src.extract(src.begin());
+            node.value() = func(std::move(node.value()));
+            dest.insert(std::move(node));
+        }
+        return dest;
+    }
+
+    template <typename Func, typename Dest = WithInnerType_T<Src, std::invoke_result_t<Func, T>>>
+    // clang-format off
+    requires concepts::SingletonEnabledMonoid<Src> && cefal::detail::DoubleSocketedStdContainer<Src> && std::same_as<Src, Dest>
+        // clang-format on
+        static auto map(Src&& src, Func&& func) {
+        auto dest = detail::createMapDestination<Dest>(src);
+        while (!src.empty()) {
+            auto node = src.extract(src.begin());
+            auto result = func(std::forward_as_tuple(node.key(), node.mapped()));
+            std::swap(std::get<0>(result), node.key());
+            std::swap(std::get<1>(result), node.mapped());
+            dest.insert(std::move(node));
+        }
+        return dest;
+    }
 };
 } // namespace cefal::instances

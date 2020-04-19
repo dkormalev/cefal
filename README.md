@@ -111,24 +111,24 @@ Map benchmarks transform container to same type (to make it similar between lval
 
 Filter benchmarks are also divided by percentage of items that are accepted.
 
-All values are from `mean` section of catch2 benchmarks.
+All values are from `mean` section of catch2 benchmarks in milliseconds (captured on MBP15'2014 with i7).
 
 Std library is from GCC/master (commit 73dd051894b8293d35ea1c436fa408c404b80813, April 1 2020) and all benchmarks are built with `-O3`.
 
 ### map() for int
 Type            | vector   | list     | deque    | set      | unordered_set  | map      | unordered_map
 --------------- | -------: | -------: | -------: | -------: | -------------: | -------: | --------------:
-Immutable cefal | 23.028   | 183.425  | 58.212   | 27.229   | 19.808         | 27.218   | 19.742
-Immutable std   | 27.566   | 182.485  | 57.714   | 26.004   | 17.750         | 26.439   | 17.324
-Mutable cefal   | 2.998    | 4.191    | 6.875    | 27.561   | 20.442         | 28.143   | 20.528
+Immutable cefal | 23.028   | 183.425  | 58.212   | 29.585   | 21.127         | 28.193   | 21.389
+Immutable std   | 27.566   | 182.485  | 57.714   | 26.922   | 19.716         | 27.418   | 18.953
+Mutable cefal   | 2.998    | 4.191    | 6.875    | 10.857   | 6.689          | 10.912   | 6.491
 Mutable std     | 3.007    | 4.258    | 9.540    | N/A      | N/A            | N/A      | N/A
 
 ### map() for Expensive
 Type            | vector    | list      | deque     | set       | unordered_set  | map      | map 2    | unordered_map
 --------------- | --------: | --------: | --------: | --------: | -------------: | -------: | -------: | --------------:
-Immutable cefal | 60.766    | 65.032    | 61.077    | 67.672    | 66.641         | 72.256   | 70.414   | 66.610
-Immutable std   | 67.383    | 65.151    | 61.076    | 69.518    | 66.037         | 71.156   | 81.959   | 66.226
-Mutable cefal   | 0.052     | 0.102     | 0.034     | 5.185     | 5.054          | 6.800    | 5.869    | 5.204
+Immutable cefal | 60.766    | 65.032    | 61.077    | 72.307    | 74.978         | 76.555   | 76.553   | 74.536
+Immutable std   | 67.383    | 65.151    | 61.076    | 75.573    | 74.242         | 77.113   | 90.504   | 72.470
+Mutable cefal   | 0.052     | 0.102     | 0.034     | 2.051     | 1.954          | 2.378    | 2.621    | 1.958
 Mutable std     | 15.692    | 16.074    | 16.077    | N/A       | N/A            | N/A      | N/A      | N/A
 
 ### filter() for int
@@ -203,7 +203,7 @@ Immutable cefal   | 7.176    | 18.088   | 34.954   | 53.145   | 63.102
 Immutable std     | 83.866   | 87.060   | 82.871   | 83.906   | 85.545
 Mutable cefal     | 33.768   | 30.118   | 21.740   | 11.470   | 5.764
 Mutable std       | 48.071   | 43.940   | 35.722   | 25.031   | 19.477
-**unordered_map ** |||||
+**unordered_map** |||||
 Immutable cefal   | 7.502    | 17.510   | 34.283   | 63.619   | 65.634
 Immutable std     | 84.983   | 85.647   | 85.597   | 84.457   | 83.882
 Mutable cefal     | 35.043   | 30.765   | 21.955   | 11.599   | 5.544
@@ -211,14 +211,16 @@ Mutable std       | 50.346   | 44.926   | 36.233   | 25.999   | 19.650
 
 ### Observations on benchmark results
  * Immutable `map()` is on par with `std::transform`
- * Mutable `map()` for ints is on par, but for move-efficient types it is A LOT faster than `std::transform` (numbers in table above are not a mistake)
- * There is no mutable `std::transform` for set-like containers, but mutable `map()` for ints is roughly the same as immutable versions of both cefal and std
- * Mutable `map()` for set-like containers of move-efficient types is much faster than immutable cefal or std performance
+ * For vector-like (vector, list, deque) containers mutable `map()` for ints is on par, but for move-efficient types it is A LOT faster than `std::transform` (numbers in table above are not a typo)
+ * There is no mutable "single call" `std::transform` for set-like or associative containers, but mutable `map()` for all inner types is much faster than immutable versions of both cefal and std
  * For maps - performance is similar as for set-like containers. There is one extra interesting point - `std::transform` for `std::map` of Expensive as key works slower than for case when Expensive is value. It doesn't happen for `cefal::map()` and not reproducible on `std::unordered_map` or on any filter/erase_if operations.
  * `filter()` is worse than `std::erase_if` for mutable lists of both ints and Expensive and for vectors of Expensive in case when almost whole container is accepted
  * `filter()` is on par with `std::erase_if` in case of immutable vector of small types and in case of all other mutable containers not mentioned above
  * For immutable containers except vector `filter()` is either on par or better than `std::erase_if`. Less elements are accepted - bigger the gap for in favor of `filter()` (up to 10x in case of 10% elements accepted)
- * Benchmarks for mapping to another inner type also exist in source codes (not added here for brevity). For immutable containers they show pretty much the same results (i.e. almost equal between cefal and std). Mutable cefal benchmarks for move-effective types though shows 1.5x-2x better performance on all containers except unordered_set.
+ * Benchmarks for mapping to another inner type also exist in source code (not added here for brevity).
+   * For immutable containers they show pretty much the same results (i.e. almost equal between cefal and std).
+   * For mutable containers of ints it is also on the same level.
+   * Mutable cefal benchmarks for move-effective types though shows better performance than immutable cefal/std on all containers except unordered_set (where it is on par).
 
 As a general conclusion: there are for sure few cases where cefal shows itself worse than direct usage of std algorithm (not tremendously though), but there are also a lot of cases where cefal works faster by 1-2 orders of magnitude (especially in case of move-efficient types) and in remaining cases it is on par with std.
 
