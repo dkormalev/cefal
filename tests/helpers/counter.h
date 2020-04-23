@@ -45,6 +45,8 @@ public:
     }
     ~Counter() noexcept { _deleted++; }
 
+    auto operator<=>(const Counter&) const = default;
+
     static uint64_t created() { return _created; }
     static uint64_t copied() { return _copied; }
     static uint64_t moved() { return _moved; }
@@ -89,3 +91,48 @@ private:
     static std::mutex customMutex;
     static std::unordered_map<std::string, uint64_t> _custom;
 };
+
+struct CountedValue : public Counter {
+    CountedValue() : Counter() {}
+    CountedValue(int value) : Counter(), value(value) {}
+    CountedValue(const CountedValue&) noexcept = default;
+    CountedValue(CountedValue&&) noexcept = default;
+    CountedValue& operator=(const CountedValue&) noexcept = default;
+    CountedValue& operator=(CountedValue&&) noexcept = default;
+    int value = 0;
+    int64_t u1 = 0;
+    int64_t u2 = 0;
+    auto operator<=>(const CountedValue&) const = default;
+};
+
+inline std::ostream& operator<<(std::ostream& os, const CountedValue& value) {
+    os << std::to_string(value.value);
+    return os;
+}
+inline std::ostream& operator<<(std::ostream& os, const std::tuple<int, CountedValue>& value) {
+    os << std::to_string(std::get<0>(value)) << std::string(":") << std::get<1>(value);
+    return os;
+}
+inline std::ostream& operator<<(std::ostream& os, const std::tuple<CountedValue, CountedValue>& value) {
+    os << std::get<0>(value) << std::string(":") << std::get<1>(value);
+    return os;
+}
+
+namespace std {
+template <>
+struct hash<CountedValue> {
+    std::size_t operator()(const CountedValue& x) const noexcept { return std::hash<int>{}(x.value); }
+};
+template <>
+struct hash<tuple<int, CountedValue>> {
+    std::size_t operator()(const tuple<int, CountedValue>& x) const noexcept {
+        return std::hash<int>{}(get<0>(x)) ^ (std::hash<CountedValue>{}(get<1>(x)) << 1);
+    }
+};
+template <>
+struct hash<tuple<CountedValue, CountedValue>> {
+    std::size_t operator()(const tuple<CountedValue, CountedValue>& x) const noexcept {
+        return std::hash<CountedValue>{}(get<0>(x)) ^ (std::hash<CountedValue>{}(get<1>(x)) << 1);
+    }
+};
+} // namespace std

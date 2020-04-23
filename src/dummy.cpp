@@ -156,7 +156,105 @@ int main() {
                                                      });
     std::cout << rangeResult << std::endl;
 
+    {
+        std::set<int> converted = std::vector{1, 2, 3} | ops::as<std::set<int>>();
+        std::cout << "1->1 rvalue converted: " << converted.size() << ": ";
+        for (auto&& x : converted) std::cout << x << " ";
+        std::cout << std::endl;
 
+        auto convertSrc = std::vector{1, 2, 3};
+        std::set<int> lvalueConverted = convertSrc | ops::as<std::set>();
+        std::cout << "1->1 lvalue converted: " << lvalueConverted.size() << ": ";
+        for (auto&& x : lvalueConverted) std::cout << x << " ";
+        std::cout << std::endl;
+
+        std::set<double> viewConverted = convertSrc | std::views::transform([](auto x) {return x * 2.5;}) | ops::as<std::set>();
+        std::cout << "1->1 view converted: " << viewConverted.size() << ": ";
+        for (auto&& x : viewConverted) std::cout << x << " ";
+        std::cout << std::endl;
+    }
+
+    {
+        std::vector<std::tuple<std::string, int>> converted = std::map<std::string, int>{{"12", 34}, {"56", 78}} | ops::as<std::vector>();
+        std::cout << "2->1 rvalue converted: " << converted.size() << ": ";
+        for (auto&& [x, y] : converted) std::cout << x << ":" << y << " ";
+        std::cout << std::endl;
+
+        auto convertSrc = std::map<std::string, int> {{"12", 34}, {"56", 78}};
+        std::vector<std::tuple<std::string, int>> lvalueConverted = convertSrc | ops::as<std::vector>();
+        std::cout << "2->1 lvalue converted: " << lvalueConverted.size() << ": ";
+        for (auto&& [x, y] : lvalueConverted) std::cout << x << ":" << y << " ";
+        std::cout << std::endl;
+
+        std::set<std::tuple<std::string, double>> viewConverted =
+            convertSrc | std::views::transform([](auto x) {return std::make_tuple(std::get<0>(x), std::get<1>(x) * 2.5);})
+                       | ops::as<std::set>();
+        std::cout << "2->1 view converted: " << viewConverted.size() << ": ";
+        for (auto&& [x, y] : viewConverted) std::cout << x << ":" << y << " ";
+        std::cout << std::endl;
+    }
+
+    {
+        std::unordered_map<std::string, int> converted = std::map<std::string, int>{{"12", 34}, {"56", 78}} | ops::as<std::unordered_map>();
+        std::cout << "2->2 rvalue converted: " << converted.size() << ": ";
+        for (auto&& [x, y] : converted) std::cout << x << ":" << y << " ";
+        std::cout << std::endl;
+
+        auto convertSrc = std::map<std::string, int> {{"12", 34}, {"56", 78}};
+        std::unordered_map<std::string, int> lvalueConverted = convertSrc | ops::as<std::unordered_map>();
+        std::cout << "2->2 lvalue converted: " << lvalueConverted.size() << ": ";
+        for (auto&& [x, y] : lvalueConverted) std::cout << x << ":" << y << " ";
+        std::cout << std::endl;
+
+        std::unordered_map<std::string, double> viewConverted =
+            convertSrc | std::views::transform([](auto x) {return std::make_pair(std::get<0>(x), std::get<1>(x) * 2.5);})
+                       | ops::as<std::unordered_map>();
+        std::cout << "2->2 view converted: " << viewConverted.size() << ": ";
+        for (auto&& [x, y] : viewConverted) std::cout << x << ":" << y << " ";
+        std::cout << std::endl;
+    }
+
+    {
+        std::unordered_map<std::string, int> converted = std::vector<std::tuple<std::string, int>>{{"12", 34}, {"56", 78}} | ops::as<std::unordered_map>();
+        std::cout << "1t->2 rvalue converted: " << converted.size() << ": ";
+        for (auto&& [x, y] : converted) std::cout << x << ":" << y << " ";
+        std::cout << std::endl;
+
+        auto convertSrc = std::vector<std::tuple<std::string, int>> {{"12", 34}, {"56", 78}};
+        std::unordered_map<std::string, int> lvalueConverted = convertSrc | ops::as<std::unordered_map>();
+        std::cout << "1t->2 lvalue converted: " << lvalueConverted.size() << ": ";
+        for (auto&& [x, y] : lvalueConverted) std::cout << x << ":" << y << " ";
+        std::cout << std::endl;
+
+        std::unordered_map<std::string, double> viewConverted =
+            convertSrc | std::views::transform([](auto x) {return std::make_pair(std::get<0>(x), std::get<1>(x) * 2.5);})
+                       | ops::as<std::unordered_map>();
+        std::cout << "1t->2 view converted: " << viewConverted.size() << ": ";
+        for (auto&& [x, y] : viewConverted) std::cout << x << ":" << y << " ";
+        std::cout << std::endl;
+    }
+
+    {
+        std::unordered_map<std::string, int> converted = std::vector<std::pair<std::string, int>>{{"12", 34}, {"56", 78}} | ops::as<std::unordered_map>();
+        std::cout << "1p->2 rvalue converted: " << converted.size() << ": ";
+        for (auto&& [x, y] : converted) std::cout << x << ":" << y << " ";
+        std::cout << std::endl;
+
+        auto convertSrc = std::vector<std::pair<std::string, int>> {{"12", 34}, {"56", 78}};
+        std::unordered_map<std::string, int> lvalueConverted = convertSrc | ops::as<std::unordered_map>();
+        std::cout << "1p->2 lvalue converted: " << lvalueConverted.size() << ": ";
+        for (auto&& [x, y] : lvalueConverted) std::cout << x << ":" << y << " ";
+        std::cout << std::endl;
+
+        std::unordered_map<std::string, double> viewConverted =
+            convertSrc | std::views::transform([](auto x) {return std::make_pair(std::get<0>(x), std::get<1>(x) * 2.5);})
+                       | ops::as<std::unordered_map>();
+        std::cout << "1p->2 view converted: " << viewConverted.size() << ": ";
+        for (auto&& [x, y] : viewConverted) std::cout << x << ":" << y << " ";
+        std::cout << std::endl;
+    }
+
+    std::cout << std::endl;
     std::cout << getInt(42) << std::endl;
     std::cout << testOptional(3) << "; " <<  testOptional(2) << "; " <<  testOptional(std::nullopt) << std::endl;
     { ContainerTester<std::vector<int>> x; }

@@ -47,7 +47,7 @@ template <typename Dest, typename Src>
 void prepareMapDestination(const Src& src, Dest& dest) {
 }
 
-template <concepts::Monoid Dest, concepts::Monoid Src>
+template <concepts::Monoid Dest, typename Src>
 Dest createMapDestination(const Src& src) {
     auto dest = ops::empty<Dest>();
     prepareMapDestination(src, dest);
@@ -64,10 +64,22 @@ private:
     using T = InnerType_T<Src>;
 
 public:
-    template <typename Input>
-    static Src unit(Input&& x) {
-        static_assert(std::is_convertible_v<std::remove_cvref_t<Input>, T>, "Should be same type");
-        return Src{static_cast<T>(std::forward<Input>(x))};
+    template <typename = void>
+    static Src unit(T&& x) {
+        return Src{std::move(x)};
+    }
+    template <typename = void>
+    static Src unit(const T& x) {
+        return Src{x};
+    }
+
+    template <typename = void>
+    requires concepts::SingletonEnabledMonoid<Src> static Src unit(T&& x) {
+        return ops::empty<Src>() | ops::append(helpers::SingletonFrom<Src>{std::move(x)});
+    }
+    template <typename = void>
+    requires concepts::SingletonEnabledMonoid<Src> static Src unit(const T& x) {
+        return ops::empty<Src>() | ops::append(helpers::SingletonFrom<Src>{x});
     }
 
     template <typename K, typename V>

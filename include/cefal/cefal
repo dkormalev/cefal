@@ -23,6 +23,7 @@
  *
  */
 
+#include "cefal/converter.h"
 #include "cefal/common.h"
 #include "cefal/foldable.h"
 #include "cefal/functor.h"

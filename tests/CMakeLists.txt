@@ -36,3 +36,7 @@ cefal_test(filterable std_optional)
 cefal_test(filterable std_ranges)
 cefal_test(filterable with_functions)
 
+cefal_test(converter from_self)
+cefal_test(converter from_std_containers)
+cefal_test(converter from_std_optional)
+

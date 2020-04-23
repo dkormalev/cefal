@@ -40,6 +40,10 @@ template <typename K, typename V>
 struct ConstInnerType<std::map<K, V>> {
     using type = std::tuple<const K&, const V&>;
 };
+template <typename K, typename V>
+struct NakedInnerType<std::map<K, V>> {
+    using type = std::tuple<K, V>;
+};
 
 template <typename K, typename V>
 struct InnerType<std::unordered_map<K, V>> {
@@ -48,6 +52,10 @@ struct InnerType<std::unordered_map<K, V>> {
 template <typename K, typename V>
 struct ConstInnerType<std::unordered_map<K, V>> {
     using type = std::tuple<const K&, const V&>;
+};
+template <typename K, typename V>
+struct NakedInnerType<std::unordered_map<K, V>> {
+    using type = std::tuple<K, V>;
 };
 
 template <typename K, typename V>
@@ -58,6 +66,10 @@ template <typename K, typename V>
 struct ConstInnerType<std::multimap<K, V>> {
     using type = std::tuple<const K&, const V&>;
 };
+template <typename K, typename V>
+struct NakedInnerType<std::multimap<K, V>> {
+    using type = std::tuple<K, V>;
+};
 
 template <typename K, typename V>
 struct InnerType<std::unordered_multimap<K, V>> {
@@ -66,6 +78,10 @@ struct InnerType<std::unordered_multimap<K, V>> {
 template <typename K, typename V>
 struct ConstInnerType<std::unordered_multimap<K, V>> {
     using type = std::tuple<const K&, const V&>;
+};
+template <typename K, typename V>
+struct NakedInnerType<std::unordered_multimap<K, V>> {
+    using type = std::tuple<K, V>;
 };
 
 template <typename K, typename V, typename NewK, typename NewV>

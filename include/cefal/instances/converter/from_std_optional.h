@@ -23,29 +23,33 @@
  *
  */
 
-#include "cefal/cefal"
+#pragma once
 
-#include "cefal/helpers/std_containers.h"
-#include "cefal/helpers/std_ranges.h"
+#include "cefal/detail/std_concepts.h"
 
-#include "cefal/instances/converter/from_self.h"
-#include "cefal/instances/converter/from_std_containers.h"
-#include "cefal/instances/converter/from_std_optional.h"
-#include "cefal/instances/filterable/from_foldable.h"
-#include "cefal/instances/filterable/std_optional.h"
-#include "cefal/instances/filterable/std_ranges.h"
-#include "cefal/instances/filterable/with_functions.h"
-#include "cefal/instances/foldable/std_containers.h"
-#include "cefal/instances/foldable/std_ranges.h"
-#include "cefal/instances/foldable/with_functions.h"
-#include "cefal/instances/functor/from_foldable.h"
-#include "cefal/instances/functor/std_optional.h"
-#include "cefal/instances/functor/std_ranges.h"
-#include "cefal/instances/functor/with_functions.h"
-#include "cefal/instances/monad/from_foldable.h"
-#include "cefal/instances/monad/std_optional.h"
-#include "cefal/instances/monad/with_functions.h"
-#include "cefal/instances/monoid/basic_types.h"
-#include "cefal/instances/monoid/std_containers.h"
-#include "cefal/instances/monoid/std_optional.h"
-#include "cefal/instances/monoid/with_functions.h"
+#include "cefal/common.h"
+#include "cefal/converter.h"
+#include "cefal/functor.h"
+#include "cefal/monoid.h"
+
+#include <optional>
+
+namespace cefal::instances {
+template <typename T, typename Dest>
+// clang-format off
+requires cefal::concepts::Monoid<Dest> && cefal::concepts::Functor<Dest>
+    // clang-format on
+    struct Converter<std::optional<T>, Dest> {
+    static Dest convert(std::optional<T>&& src) {
+        if (!src)
+            return ops::empty<Dest>();
+        return ops::unit<Dest>(std::move(src).value());
+    }
+
+    static Dest convert(const std::optional<T>& src) {
+        if (!src)
+            return ops::empty<Dest>();
+        return ops::unit<Dest>(src.value());
+    }
+};
+} // namespace cefal::instances

@@ -25,24 +25,59 @@
 
 #pragma once
 
-#include "cefal/detail/common_concepts.h"
+#include "cefal/detail/instantiator.h"
 
-#include "cefal/helpers/inner_type.h"
-#include "cefal/helpers/nums.h"
+#include "cefal/common.h"
 
+#include <concepts>
+#include <functional>
 #include <utility>
 
 namespace cefal {
+namespace instances {
+template <typename T, typename U>
+struct Converter;
+} // namespace instances
+
+namespace concepts {
+// clang-format off
+template <typename T, typename U>
+concept CanConvert = requires(T x) {
+    { instances::Converter<T, U>::convert(x) } -> std::same_as<U>;
+    { instances::Converter<T, U>::convert(std::move(x)) } -> std::same_as<U>;
+};
+// clang-format on
+} // namespace concepts
+
 namespace ops {
 namespace detail {
-template <typename Left, typename Op>
-inline auto operator|(Left&& left, Op&& op) {
-    return std::forward<Op>(op)(std::forward<Left>(left));
-}
+template <template <typename...> typename U>
+struct as_templated {
+    template <typename T, typename CleanT = std::remove_cvref_t<T>,
+              typename FullU = WithInnerType_T<cefal::detail::Instantiator_T<U>, NakedInnerType_T<CleanT>>>
+    requires concepts::CanConvert<CleanT, FullU> auto operator()(T&& left) const {
+        return instances::Converter<CleanT, FullU>::convert(std::forward<T>(left));
+    }
+};
+template <typename U>
+struct as_full {
+    template <typename T, typename CleanT = std::remove_cvref_t<T>, typename CleanU = std::remove_cvref_t<U>>
+    requires concepts::CanConvert<CleanT, CleanU> auto operator()(T&& left) const {
+        static_assert(std::is_same_v<CleanU, WithInnerType_T<CleanU, NakedInnerType_T<CleanT>>>,
+                      "cefal::ops::as can be called only for destination with same inner type as source");
+        return instances::Converter<CleanT, CleanU>::convert(std::forward<T>(left));
+    }
+};
 } // namespace detail
-template <typename Left, typename Op>
-inline auto operator|(Left&& left, Op&& op) {
-    return std::forward<Op>(op)(std::forward<Left>(left));
+
+template <template <typename...> typename U>
+inline auto as() {
+    return detail::as_templated<U>();
 }
+template <typename U>
+inline auto as() {
+    return detail::as_full<U>();
+}
+
 } // namespace ops
 } // namespace cefal
