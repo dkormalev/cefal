@@ -143,7 +143,7 @@ TEMPLATE_PRODUCT_TEST_CASE("ops::filter()", "",
 TEMPLATE_PRODUCT_TEST_CASE("ops::filter()", "", (std::map, std::unordered_map, std::multimap, std::unordered_multimap),
                            ((std::string, int))) {
     TestType result;
-    auto func = [](const std::tuple<const std::string&, int>& x) { return std::get<1>(x) % 2; };
+    auto func = [](const std::pair<std::string, int>& x) { return x.second % 2; };
     SECTION("Lvalue") {
         const auto left = TestType{{"abc", 1}, {"de", 2}, {"f", 3}};
         SECTION("Pipe") { result = left | ops::filter(func); }

@@ -173,13 +173,11 @@ TEMPLATE_PRODUCT_TEST_CASE("cefal::map() to same type", "",
 TEMPLATE_PRODUCT_TEST_CASE("cefal::map() to same type", "", (std::map, std::unordered_map),
                            ((int, int), (int, Expensive<int>), (Expensive<int>, int))) {
     using InnerType = cefal::InnerType_T<TestType>;
-    using DerefedInnerType =
-        std::tuple<std::remove_cvref_t<std::tuple_element_t<0, InnerType>>, std::remove_cvref_t<std::tuple_element_t<1, InnerType>>>;
     BENCHMARK_ADVANCED("cefal::map() - immutable - x" + std::to_string(ContainerSize_V<TestType>))
     (Catch::Benchmark::Chronometer meter) {
         auto func = [](const auto& x) {
-            DerefedInnerType result = x;
-            std::get<1>(result) += 1;
+            auto result = x;
+            result.second += 1;
             return result;
         };
         auto seed = std::chrono::system_clock::now();
@@ -213,7 +211,7 @@ TEMPLATE_PRODUCT_TEST_CASE("cefal::map() to same type", "", (std::map, std::unor
     BENCHMARK_ADVANCED("cefal::map() - mutable - x" + std::to_string(ContainerSize_V<TestType>))
     (Catch::Benchmark::Chronometer meter) {
         auto func = [](auto&& x) {
-            std::get<1>(x) += 1;
+            x.second += 1;
             return std::move(x);
         };
         auto seed = std::chrono::system_clock::now();
@@ -319,11 +317,9 @@ TEMPLATE_PRODUCT_TEST_CASE("cefal::map() to different type", "",
 TEMPLATE_PRODUCT_TEST_CASE("cefal::map() to different type", "", (std::map, std::unordered_map),
                            ((int, int), (int, Expensive<int>), (Expensive<int>, int))) {
     using InnerType = cefal::InnerType_T<TestType>;
-    using DerefedInnerType =
-        std::tuple<std::remove_cvref_t<std::tuple_element_t<0, InnerType>>, std::remove_cvref_t<std::tuple_element_t<1, InnerType>>>;
     BENCHMARK_ADVANCED("cefal::map() - immutable - x" + std::to_string(ContainerSize_V<TestType>))
     (Catch::Benchmark::Chronometer meter) {
-        auto func = [](const auto& x) { return std::make_tuple(std::get<0>(x), std::get<1>(x) + (double)1.0); };
+        auto func = [](const auto& x) { return std::make_pair(x.first, x.second + (double)1.0); };
         using Dest = WithInnerType_T<TestType, std::invoke_result_t<decltype(func), InnerType_T<TestType>>>;
         auto seed = std::chrono::system_clock::now();
         TestType src;
@@ -352,7 +348,7 @@ TEMPLATE_PRODUCT_TEST_CASE("cefal::map() to different type", "", (std::map, std:
 
     BENCHMARK_ADVANCED("cefal::map() - mutable - x" + std::to_string(ContainerSize_V<TestType>))
     (Catch::Benchmark::Chronometer meter) {
-        auto func = [](auto&& x) { return std::make_tuple(std::move(std::get<0>(x)), std::move(std::get<1>(x)) + (double)1.0); };
+        auto func = [](auto&& x) { return std::make_pair(std::move(x.first), std::move(x.second) + (double)1.0); };
         using Dest = WithInnerType_T<TestType, std::invoke_result_t<decltype(func), InnerType_T<TestType>>>;
         auto seed = std::chrono::system_clock::now();
         std::vector<TestType> src(meter.runs());

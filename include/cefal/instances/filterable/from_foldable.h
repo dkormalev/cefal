@@ -70,7 +70,7 @@ requires concepts::Foldable<Src> && concepts::Monoid<Src> && (!detail::HasFilter
 // clang-format on
 struct Filterable<Src> {
 private:
-    using T = ConstInnerType_T<Src>;
+    using T = InnerType_T<Src>;
 
 public:
     template <typename Input, typename Func>
@@ -145,27 +145,11 @@ public:
 
     template <typename Func>
     // clang-format off
-    requires concepts::SingletonEnabledMonoid<Src> && (!cefal::detail::StdRemoveIfable<Src, Func>)
-    && cefal::detail::SingleSocketedStdContainer<Src> && cefal::detail::Erasable<Src>
+    requires concepts::SingletonEnabledMonoid<Src> && (!cefal::detail::StdRemoveIfable<Src, Func>) && cefal::detail::Erasable<Src>
         // clang-format on
         static auto filter(Src&& src, Func&& func) {
         for (auto it = src.begin(), end = src.end(); it != end;) {
             if (func(*it))
-                ++it;
-            else
-                it = src.erase(it);
-        }
-        return std::move(src);
-    }
-
-    template <typename Func>
-    // clang-format off
-    requires concepts::SingletonEnabledMonoid<Src> && (!cefal::detail::StdRemoveIfable<Src, Func>)
-    && cefal::detail::DoubleSocketedStdContainer<Src> && cefal::detail::Erasable<Src>
-        // clang-format on
-        static auto filter(Src&& src, Func&& func) {
-        for (auto it = src.begin(), end = src.end(); it != end;) {
-            if (func(std::forward_as_tuple(it->first, it->second)))
                 ++it;
             else
                 it = src.erase(it);

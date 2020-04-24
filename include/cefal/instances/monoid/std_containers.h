@@ -43,8 +43,8 @@ struct SingletonFrom<Src> {
 template <cefal::detail::DoubleSocketedStdContainer Src>
 struct SingletonFrom<Src> {
     using exists = void;
-    SingletonFrom(const ConstInnerType_T<Src>& x) : key(std::get<0>(x)), value(std::get<1>(x)) {}
-    SingletonFrom(InnerType_T<Src>&& x) : key(std::move(std::get<0>(x))), value(std::move(std::get<1>(x))) {}
+    SingletonFrom(const InnerType_T<Src>& x) : key(x.first), value(x.second) {}
+    SingletonFrom(InnerType_T<Src>&& x) : key(std::move(x.first)), value(std::move(x.second)) {}
     typename Src::key_type key;
     typename Src::mapped_type value;
 };

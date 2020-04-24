@@ -114,13 +114,12 @@ struct Converter<Src, Dest> {
         if constexpr (std::is_trivial_v<KeyT> && sizeof(KeyT) <= 8) {
             for (auto& x : src) {
                 KeyT key = x.first;
-                detail::addToConvertFromRangeDestination(dest, std::forward_as_tuple(key, std::move(x.second)));
+                detail::addToConvertFromRangeDestination(dest, std::make_pair(key, std::move(x.second)));
             }
         } else {
             while (!src.empty()) {
                 auto node = src.extract(src.begin());
-                detail::addToConvertFromRangeDestination(dest,
-                                                         std::forward_as_tuple(std::move(node.key()), std::move(node.mapped())));
+                detail::addToConvertFromRangeDestination(dest, std::make_pair(std::move(node.key()), std::move(node.mapped())));
             }
         }
         return dest;

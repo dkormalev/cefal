@@ -117,21 +117,21 @@ TEMPLATE_PRODUCT_TEST_CASE("ops::map()", "",
 
 TEMPLATE_PRODUCT_TEST_CASE("ops::map()", "", (std::map, std::unordered_map, std::multimap, std::unordered_multimap),
                            ((std::string, int))) {
-    WithInnerType_T<TestType, std::tuple<int, std::string>> result;
+    WithInnerType_T<TestType, std::pair<int, std::string>> result;
     SECTION("Lvalue") {
-        auto func = [](const std::tuple<const std::string&, int>& x) { return make_tuple(std::get<1>(x), std::get<0>(x)); };
+        auto func = [](const std::pair<std::string, int>& x) { return make_pair(x.second, x.first); };
         const auto left = TestType{{"abc", 1}, {"de", 2}, {"f", 3}};
         SECTION("Pipe") { result = left | ops::map(func); }
         SECTION("Curried") { result = ops::map(func)(left); }
     }
     SECTION("Rvalue") {
-        auto func = [](std::tuple<std::string&, int>&& x) { return make_tuple(std::get<1>(x), std::move(std::get<0>(x))); };
+        auto func = [](std::pair<std::string, int>&& x) { return make_pair(x.second, std::move(x.first)); };
         auto left = TestType{{"abc", 1}, {"de", 2}, {"f", 3}};
         SECTION("Pipe") { result = std::move(left) | ops::map(func); }
         SECTION("Curried") { result = ops::map(func)(std::move(left)); }
     }
 
-    CHECK(result == WithInnerType_T<TestType, std::tuple<int, std::string>>{{1, "abc"}, {2, "de"}, {3, "f"}});
+    CHECK(result == WithInnerType_T<TestType, std::pair<int, std::string>>{{1, "abc"}, {2, "de"}, {3, "f"}});
 }
 
 TEST_CASE("ops::map() - TemplatedWithFunctions<std::string>") {

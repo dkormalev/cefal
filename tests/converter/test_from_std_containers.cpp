@@ -180,7 +180,7 @@ TEMPLATE_LIST_TEST_CASE("ops::as()", "", DoubleToDouble) {
         SECTION("Curried") { result = ops::as<Dest>()(std::move(left)); }
         CHECK(Counter::created() == 0);
         CHECK(Counter::copied() == 0);
-        CHECK(Counter::moved() <= 3);
+        CHECK(Counter::moved() <= 6);
     }
     CHECK(result == Dest{{1, CountedValue(1)}, {2, CountedValue(2)}, {3, CountedValue(3)}});
 }
@@ -191,7 +191,7 @@ TEMPLATE_LIST_TEST_CASE("ops::as()", "", SingleToDouble) {
     Dest result;
     SECTION("Lvalue") {
         const auto left = Src{CountedValue(1), CountedValue(2), CountedValue(3)}
-                          | ops::map([](CountedValue&& x) { return std::make_tuple(x.value, x); });
+                          | ops::map([](CountedValue&& x) { return std::make_pair(x.value, x); });
         Counter::reset();
         SECTION("Pipe") { result = left | ops::as<Dest>(); }
         SECTION("Curried") { result = ops::as<Dest>()(left); }
@@ -200,7 +200,7 @@ TEMPLATE_LIST_TEST_CASE("ops::as()", "", SingleToDouble) {
     }
     SECTION("Rvalue") {
         auto left = Src{CountedValue(1), CountedValue(2), CountedValue(3)}
-                    | ops::map([](CountedValue&& x) { return std::make_tuple(x.value, x); });
+                    | ops::map([](CountedValue&& x) { return std::make_pair(x.value, x); });
         Counter::reset();
         SECTION("Pipe") { result = std::move(left) | ops::as<Dest>(); }
         SECTION("Curried") { result = ops::as<Dest>()(std::move(left)); }
@@ -213,7 +213,7 @@ TEMPLATE_LIST_TEST_CASE("ops::as()", "", SingleToDouble) {
 
 TEMPLATE_LIST_TEST_CASE("ops::as()", "", DoubleToSingle) {
     using Src = std::tuple_element_t<0, TestType>;
-    using Dest = WithInnerType_T<std::tuple_element_t<1, TestType>, std::tuple<int, CountedValue>>;
+    using Dest = WithInnerType_T<std::tuple_element_t<1, TestType>, std::pair<int, CountedValue>>;
     Dest result;
     SECTION("Lvalue") {
         const auto left = Src{{1, CountedValue(1)}, {2, CountedValue(2)}, {3, CountedValue(3)}};
@@ -230,7 +230,7 @@ TEMPLATE_LIST_TEST_CASE("ops::as()", "", DoubleToSingle) {
         SECTION("Curried") { result = ops::as<Dest>()(std::move(left)); }
         CHECK(Counter::created() == 0);
         CHECK(Counter::copied() == 0);
-        CHECK(Counter::moved() <= 9);
+        CHECK(Counter::moved() <= 6);
     }
     result = PrepareResult<Src, Dest>::prepare(std::move(result));
     CHECK(result == Dest{{1, CountedValue(1)}, {2, CountedValue(2)}, {3, CountedValue(3)}});
@@ -259,7 +259,7 @@ TEMPLATE_LIST_TEST_CASE("ops::as()", "", HeavyDoubleToDouble) {
         SECTION("Curried") { result = ops::as<Dest>()(std::move(left)); }
         CHECK(Counter::created() == 0);
         CHECK(Counter::copied() == 0);
-        CHECK(Counter::moved() <= 6);
+        CHECK(Counter::moved() <= 12);
     }
     CHECK(result
           == Dest{{CountedValue(11), CountedValue(1)}, {CountedValue(12), CountedValue(2)}, {CountedValue(13), CountedValue(3)}});
@@ -267,7 +267,7 @@ TEMPLATE_LIST_TEST_CASE("ops::as()", "", HeavyDoubleToDouble) {
 
 TEMPLATE_LIST_TEST_CASE("ops::as()", "", HeavyDoubleToSingle) {
     using Src = std::tuple_element_t<0, TestType>;
-    using Dest = WithInnerType_T<std::tuple_element_t<1, TestType>, std::tuple<CountedValue, CountedValue>>;
+    using Dest = WithInnerType_T<std::tuple_element_t<1, TestType>, std::pair<CountedValue, CountedValue>>;
     Dest result;
     SECTION("Lvalue") {
         const auto left = Src{{CountedValue(11), CountedValue(1)},
@@ -288,7 +288,7 @@ TEMPLATE_LIST_TEST_CASE("ops::as()", "", HeavyDoubleToSingle) {
         SECTION("Curried") { result = ops::as<Dest>()(std::move(left)); }
         CHECK(Counter::created() == 0);
         CHECK(Counter::copied() == 0);
-        CHECK(Counter::moved() <= 18);
+        CHECK(Counter::moved() <= 12);
     }
     result = PrepareResult<Src, Dest>::prepare(std::move(result));
     CHECK(result
@@ -321,9 +321,9 @@ TEMPLATE_LIST_TEST_CASE("ops::as() - from view", "", SingleSocketContainers) {
 TEMPLATE_LIST_TEST_CASE("ops::as() - from view", "", HeavyDoubleSocketContainers) {
     TestType result;
     SECTION("Lvalue") {
-        const std::vector<std::tuple<CountedValue, CountedValue>> src{{CountedValue(11), CountedValue(1)},
-                                                                      {CountedValue(12), CountedValue(2)},
-                                                                      {CountedValue(13), CountedValue(3)}};
+        const std::vector<std::pair<CountedValue, CountedValue>> src{{CountedValue(11), CountedValue(1)},
+                                                                     {CountedValue(12), CountedValue(2)},
+                                                                     {CountedValue(13), CountedValue(3)}};
         const auto left = std::views::all(src);
         Counter::reset();
         SECTION("Pipe") { result = left | ops::as<TestType>(); }
@@ -332,9 +332,9 @@ TEMPLATE_LIST_TEST_CASE("ops::as() - from view", "", HeavyDoubleSocketContainers
         CHECK(Counter::copied() == 6);
     }
     SECTION("Rvalue") {
-        const std::vector<std::tuple<CountedValue, CountedValue>> src{{CountedValue(11), CountedValue(1)},
-                                                                      {CountedValue(12), CountedValue(2)},
-                                                                      {CountedValue(13), CountedValue(3)}};
+        const std::vector<std::pair<CountedValue, CountedValue>> src{{CountedValue(11), CountedValue(1)},
+                                                                     {CountedValue(12), CountedValue(2)},
+                                                                     {CountedValue(13), CountedValue(3)}};
         const auto left = std::views::all(src);
         Counter::reset();
         SECTION("Pipe") { result = std::move(left) | ops::as<TestType>(); }
@@ -344,4 +344,33 @@ TEMPLATE_LIST_TEST_CASE("ops::as() - from view", "", HeavyDoubleSocketContainers
     }
     CHECK(result
           == TestType{{CountedValue(11), CountedValue(1)}, {CountedValue(12), CountedValue(2)}, {CountedValue(13), CountedValue(3)}});
+}
+
+TEMPLATE_LIST_TEST_CASE("ops::as() - from view (from map)", "", SingleSocketContainers) {
+    using Dest = WithInnerType_T<TestType, std::pair<CountedValue, CountedValue>>;
+    Dest result;
+    SECTION("Lvalue") {
+        const std::map<CountedValue, CountedValue> src{{CountedValue(11), CountedValue(1)},
+                                                       {CountedValue(12), CountedValue(2)},
+                                                       {CountedValue(13), CountedValue(3)}};
+        const auto left = std::views::all(src);
+        Counter::reset();
+        SECTION("Pipe") { result = left | ops::as<Dest>(); }
+        SECTION("Curried") { result = ops::as<Dest>()(left); }
+        CHECK(Counter::created() == 0);
+        CHECK(Counter::copied() == 6);
+    }
+    SECTION("Rvalue") {
+        const std::map<CountedValue, CountedValue> src{{CountedValue(11), CountedValue(1)},
+                                                       {CountedValue(12), CountedValue(2)},
+                                                       {CountedValue(13), CountedValue(3)}};
+        auto left = std::views::all(src);
+        Counter::reset();
+        SECTION("Pipe") { result = std::move(left) | ops::as<Dest>(); }
+        SECTION("Curried") { result = ops::as<Dest>()(std::move(left)); }
+        CHECK(Counter::created() == 0);
+        CHECK(Counter::copied() == 6);
+    }
+    CHECK(result
+          == Dest{{CountedValue(11), CountedValue(1)}, {CountedValue(12), CountedValue(2)}, {CountedValue(13), CountedValue(3)}});
 }

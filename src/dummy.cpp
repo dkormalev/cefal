@@ -133,13 +133,13 @@ int main() {
 
     std::multimap<std::string, int> mSum = m | ops::append(m);
 
-    std::string mapResult = m | ops::map([](auto&& x) {return std::make_tuple(std::get<0>(x), std::to_string(std::get<1>(x)));})
+    std::string mapResult = m | ops::map([](auto&& x) {return std::make_pair(std::get<0>(x), std::to_string(std::get<1>(x)));})
                               | ops::foldLeft(std::string(), [](std::string c, auto&& x) {
                                     return std::move(c) + std::get<0>(x) + std::get<1>(x) + " | ";
                                 });
     std::cout << mapResult << std::endl;
 
-    mapResult = std::move(m) | ops::map([](auto&& x) {return std::make_tuple(std::get<0>(x), std::to_string(std::get<1>(x)));})
+    mapResult = std::move(m) | ops::map([](auto&& x) {return std::make_pair(std::get<0>(x), std::to_string(std::get<1>(x)));})
                              | ops::foldLeft(std::string(), [](std::string c, auto&& x) {
                                     return std::move(c) + std::get<0>(x) + std::get<1>(x) + " | ";
                                });
@@ -175,19 +175,19 @@ int main() {
     }
 
     {
-        std::vector<std::tuple<std::string, int>> converted = std::map<std::string, int>{{"12", 34}, {"56", 78}} | ops::as<std::vector>();
+        std::vector<std::pair<std::string, int>> converted = std::map<std::string, int>{{"12", 34}, {"56", 78}} | ops::as<std::vector>();
         std::cout << "2->1 rvalue converted: " << converted.size() << ": ";
         for (auto&& [x, y] : converted) std::cout << x << ":" << y << " ";
         std::cout << std::endl;
 
         auto convertSrc = std::map<std::string, int> {{"12", 34}, {"56", 78}};
-        std::vector<std::tuple<std::string, int>> lvalueConverted = convertSrc | ops::as<std::vector>();
+        std::vector<std::pair<std::string, int>> lvalueConverted = convertSrc | ops::as<std::vector>();
         std::cout << "2->1 lvalue converted: " << lvalueConverted.size() << ": ";
         for (auto&& [x, y] : lvalueConverted) std::cout << x << ":" << y << " ";
         std::cout << std::endl;
 
-        std::set<std::tuple<std::string, double>> viewConverted =
-            convertSrc | std::views::transform([](auto x) {return std::make_tuple(std::get<0>(x), std::get<1>(x) * 2.5);})
+        std::set<std::pair<std::string, double>> viewConverted =
+            convertSrc | std::views::transform([](auto x) {return std::make_pair(std::get<0>(x), std::get<1>(x) * 2.5);})
                        | ops::as<std::set>();
         std::cout << "2->1 view converted: " << viewConverted.size() << ": ";
         for (auto&& [x, y] : viewConverted) std::cout << x << ":" << y << " ";
@@ -215,12 +215,12 @@ int main() {
     }
 
     {
-        std::unordered_map<std::string, int> converted = std::vector<std::tuple<std::string, int>>{{"12", 34}, {"56", 78}} | ops::as<std::unordered_map>();
+        std::unordered_map<std::string, int> converted = std::vector<std::pair<std::string, int>>{{"12", 34}, {"56", 78}} | ops::as<std::unordered_map>();
         std::cout << "1t->2 rvalue converted: " << converted.size() << ": ";
         for (auto&& [x, y] : converted) std::cout << x << ":" << y << " ";
         std::cout << std::endl;
 
-        auto convertSrc = std::vector<std::tuple<std::string, int>> {{"12", 34}, {"56", 78}};
+        auto convertSrc = std::vector<std::pair<std::string, int>> {{"12", 34}, {"56", 78}};
         std::unordered_map<std::string, int> lvalueConverted = convertSrc | ops::as<std::unordered_map>();
         std::cout << "1t->2 lvalue converted: " << lvalueConverted.size() << ": ";
         for (auto&& [x, y] : lvalueConverted) std::cout << x << ":" << y << " ";

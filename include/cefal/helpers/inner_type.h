@@ -25,6 +25,8 @@
 
 #pragma once
 
+#include <tuple>
+
 namespace cefal {
 namespace detail {
 template <typename...>
@@ -32,6 +34,19 @@ struct SimpleInnerType;
 template <template <typename...> typename C, typename T, typename... Ts>
 struct SimpleInnerType<C<T, Ts...>> {
     using type = T;
+};
+
+template <typename T>
+struct FullDecay {
+    using type = std::remove_cvref_t<T>;
+};
+template <typename T1, typename T2>
+struct FullDecay<std::pair<T1, T2>> {
+    using type = std::pair<std::remove_cvref_t<T1>, std::remove_cvref_t<T2>>;
+};
+template <typename... T>
+struct FullDecay<std::tuple<T...>> {
+    using type = std::tuple<std::remove_cvref_t<T>...>;
 };
 } // namespace detail
 
@@ -43,15 +58,8 @@ template <typename T>
 using InnerType_T = InnerType<T>::type;
 
 template <typename T>
-struct ConstInnerType {
-    using type = InnerType<T>::type;
-};
-template <typename T>
-using ConstInnerType_T = ConstInnerType<T>::type;
-
-template <typename T>
 struct NakedInnerType {
-    using type = InnerType<T>::type;
+    using type = detail::FullDecay<typename InnerType<T>::type>::type;
 };
 template <typename T>
 using NakedInnerType_T = NakedInnerType<T>::type;

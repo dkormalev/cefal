@@ -58,11 +58,10 @@ concept HasMonadSnakeCaseMethods = requires(T x, std::function<T(InnerT)> f) {
 
 namespace concepts {
 // clang-format off
-template <typename T, typename CleanT = std::remove_cvref_t<T>, typename InnerT = InnerType_T<CleanT>,
-          typename ConstInnerT = ConstInnerType_T<CleanT>>
+template <typename T, typename CleanT = std::remove_cvref_t<T>, typename InnerT = InnerType_T<CleanT>>
 concept Monad =
-Functor<T> && requires (CleanT x, std::function<CleanT(InnerT)> converter, std::function<CleanT(ConstInnerT)> constConverter) {
-  {instances::Monad<CleanT>::flatMap(x, std::move(constConverter))} -> cefal::detail::ValidInnerTypeTransformationFrom<CleanT>;
+Functor<T> && requires (CleanT x, std::function<CleanT(InnerT)> converter) {
+  {instances::Monad<CleanT>::flatMap(x, std::move(converter))} -> cefal::detail::ValidInnerTypeTransformationFrom<CleanT>;
   {instances::Monad<CleanT>::flatMap(std::move(x), std::move(converter))} -> cefal::detail::ValidInnerTypeTransformationFrom<CleanT>;
 };
 // clang-format on

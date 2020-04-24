@@ -63,7 +63,7 @@ template <typename U>
 struct as_full {
     template <typename T, typename CleanT = std::remove_cvref_t<T>, typename CleanU = std::remove_cvref_t<U>>
     requires concepts::CanConvert<CleanT, CleanU> auto operator()(T&& left) const {
-        static_assert(std::is_same_v<CleanU, WithInnerType_T<CleanU, NakedInnerType_T<CleanT>>>,
+        static_assert(std::is_same_v<NakedInnerType_T<CleanU>, NakedInnerType_T<CleanT>>,
                       "cefal::ops::as can be called only for destination with same inner type as source");
         return instances::Converter<CleanT, CleanU>::convert(std::forward<T>(left));
     }

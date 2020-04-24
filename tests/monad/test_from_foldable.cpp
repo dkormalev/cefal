@@ -96,17 +96,13 @@ TEMPLATE_PRODUCT_TEST_CASE("ops::flatMap()", "", (std::map, std::unordered_map, 
     using DestType = WithInnerType_T<TestType, std::pair<int, std::string>>;
     DestType result;
     SECTION("Lvalue") {
-        auto func = [](const std::tuple<const std::string&, int>& x) {
-            return DestType{{std::get<1>(x), std::get<0>(x)}, {std::get<1>(x) * 10, std::get<0>(x)}};
-        };
+        auto func = [](const std::pair<std::string, int>& x) { return DestType{{x.second, x.first}, {x.second * 10, x.first}}; };
         const auto left = TestType{{"abc", 1}, {"de", 2}, {"f", 3}};
         SECTION("Pipe") { result = left | ops::flatMap(func); }
         SECTION("Curried") { result = ops::flatMap(func)(left); }
     }
     SECTION("Rvalue") {
-        auto func = [](std::tuple<std::string&, int>&& x) {
-            return DestType{{std::get<1>(x), std::get<0>(x)}, {std::get<1>(x) * 10, std::get<0>(x)}};
-        };
+        auto func = [](std::pair<std::string, int>&& x) { return DestType{{x.second, x.first}, {x.second * 10, x.first}}; };
         auto left = TestType{{"abc", 1}, {"de", 2}, {"f", 3}};
         SECTION("Pipe") { result = std::move(left) | ops::flatMap(func); }
         SECTION("Curried") { result = ops::flatMap(func)(std::move(left)); }

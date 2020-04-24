@@ -134,13 +134,10 @@ public:
     requires concepts::SingletonEnabledMonoid<Src>
         // clang-format on
         static auto map(const Src& src, Func&& func) {
-        using ConstT = ConstInnerType_T<Src>;
         using Dest = WithInnerType_T<Src, std::invoke_result_t<Func, T>>;
-        return src
-               | ops::foldLeft(detail::createMapDestination<Dest>(src),
-                               [func = std::forward<Func>(func)](Dest&& l, const ConstT& r) {
-                                   return std::move(l) | ops::append(helpers::SingletonFrom<Dest>{func(r)});
-                               });
+        return src | ops::foldLeft(detail::createMapDestination<Dest>(src), [func = std::forward<Func>(func)](Dest&& l, const T& r) {
+                   return std::move(l) | ops::append(helpers::SingletonFrom<Dest>{func(r)});
+               });
     }
 
     template <typename Func>
@@ -214,9 +211,9 @@ public:
         auto dest = detail::createMapDestination<Dest>(src);
         while (!src.empty()) {
             auto node = src.extract(src.begin());
-            auto result = func(std::forward_as_tuple(node.key(), node.mapped()));
-            std::swap(std::get<0>(result), node.key());
-            std::swap(std::get<1>(result), node.mapped());
+            auto result = func(std::make_pair(std::move(node.key()), std::move(node.mapped())));
+            std::swap(result.first, node.key());
+            std::swap(result.second, node.mapped());
             dest.insert(std::move(node));
         }
         return dest;

@@ -51,7 +51,7 @@ concept HasFilterableMethods = requires(T x, std::function<bool(InnerT)> predica
 
 namespace concepts {
 // clang-format off
-template <typename T, typename CleanT = std::remove_cvref_t<T>, typename InnerT = ConstInnerType_T<CleanT>>
+template <typename T, typename CleanT = std::remove_cvref_t<T>, typename InnerT = InnerType_T<CleanT>>
 concept Filterable =
 requires(CleanT x, std::function<bool(InnerT)> predicate) {
     { instances::Filterable<CleanT>::filter(x, std::move(predicate)) } -> cefal::detail::ValidInnerTypeTransformationFrom<CleanT>;

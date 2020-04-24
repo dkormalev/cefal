@@ -109,12 +109,12 @@ inline std::ostream& operator<<(std::ostream& os, const CountedValue& value) {
     os << std::to_string(value.value);
     return os;
 }
-inline std::ostream& operator<<(std::ostream& os, const std::tuple<int, CountedValue>& value) {
-    os << std::to_string(std::get<0>(value)) << std::string(":") << std::get<1>(value);
+inline std::ostream& operator<<(std::ostream& os, const std::pair<int, CountedValue>& value) {
+    os << std::to_string(value.first) << std::string(":") << value.second;
     return os;
 }
-inline std::ostream& operator<<(std::ostream& os, const std::tuple<CountedValue, CountedValue>& value) {
-    os << std::get<0>(value) << std::string(":") << std::get<1>(value);
+inline std::ostream& operator<<(std::ostream& os, const std::pair<CountedValue, CountedValue>& value) {
+    os << value.first << std::string(":") << value.second;
     return os;
 }
 
@@ -124,15 +124,15 @@ struct hash<CountedValue> {
     std::size_t operator()(const CountedValue& x) const noexcept { return std::hash<int>{}(x.value); }
 };
 template <>
-struct hash<tuple<int, CountedValue>> {
-    std::size_t operator()(const tuple<int, CountedValue>& x) const noexcept {
-        return std::hash<int>{}(get<0>(x)) ^ (std::hash<CountedValue>{}(get<1>(x)) << 1);
+struct hash<pair<int, CountedValue>> {
+    std::size_t operator()(const pair<int, CountedValue>& x) const noexcept {
+        return std::hash<int>{}(x.first) ^ (std::hash<CountedValue>{}(x.second) << 1);
     }
 };
 template <>
-struct hash<tuple<CountedValue, CountedValue>> {
-    std::size_t operator()(const tuple<CountedValue, CountedValue>& x) const noexcept {
-        return std::hash<CountedValue>{}(get<0>(x)) ^ (std::hash<CountedValue>{}(get<1>(x)) << 1);
+struct hash<pair<CountedValue, CountedValue>> {
+    std::size_t operator()(const pair<CountedValue, CountedValue>& x) const noexcept {
+        return std::hash<CountedValue>{}(x.first) ^ (std::hash<CountedValue>{}(x.second) << 1);
     }
 };
 } // namespace std

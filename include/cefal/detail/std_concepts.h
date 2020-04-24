@@ -45,17 +45,18 @@ concept StdContainer = requires (C c) {
     {c.size()} -> std::convertible_to<size_t>;
 };
 
-template<typename C>
-concept SingleSocketedStdContainer = StdContainer<C> && requires (C c, InnerType_T<C> value) {
-    {*std::begin(c)} -> std::convertible_to<InnerType_T<C>>;
-    C {value, value, value};
-};
 
 template<typename C>
 concept DoubleSocketedStdContainer =
 StdContainer<C> && requires (C c, typename C::value_type rawValue, typename C::key_type key, typename C::mapped_type mapped) {
-    {rawValue} -> std::convertible_to<std::pair<const typename C::key_type, typename C::mapped_type>>;
+    {rawValue} -> std::convertible_to<std::pair<typename C::key_type, typename C::mapped_type>>;
     C {{key, mapped}, {key, mapped}, {key, mapped}};
+};
+
+template<typename C>
+concept SingleSocketedStdContainer = StdContainer<C> && (!DoubleSocketedStdContainer<C>) && requires (C c, InnerType_T<C> value) {
+    {*std::begin(c)} -> std::convertible_to<InnerType_T<C>>;
+    C {value, value, value};
 };
 
 template<typename C>
@@ -77,7 +78,7 @@ concept Reservable = SingleSocketedStdContainer<C> && requires(C c, size_t size)
 };
 
 template <typename Src, typename Dest>
-concept TransferableSize = SingleSocketedStdContainer<Src> && Reservable<Dest>;
+concept TransferableSize = StdContainer<Src> && Reservable<Dest>;
 
 template <typename Src, typename Func>
 concept StdRemoveIfable = SingleSocketedStdContainer<Src> && requires(Src src, Func func, InnerType_T<Src> value) {

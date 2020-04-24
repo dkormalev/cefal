@@ -172,13 +172,9 @@ TEMPLATE_PRODUCT_TEST_CASE("cefal::filter()", "", (std::map, std::unordered_map)
                                                                          {10, true, "90%"}};
 
     using InnerType = cefal::InnerType_T<TestType>;
-    using DerefedInnerType =
-        std::tuple<std::remove_cvref_t<std::tuple_element_t<0, InnerType>>, std::remove_cvref_t<std::tuple_element_t<1, InnerType>>>;
-    using StdInnerType =
-        std::pair<std::remove_cvref_t<std::tuple_element_t<0, InnerType>>, std::remove_cvref_t<std::tuple_element_t<1, InnerType>>>;
     for (auto&& [limit, keep, percentage] : descriptors) {
-        std::function<bool(const ConstInnerType_T<TestType>&)> func;
-        std::function<bool(const StdInnerType&)> funcReverse;
+        std::function<bool(const InnerType&)> func;
+        std::function<bool(const InnerType&)> funcReverse;
         if (keep) {
             func = [limit](const auto& x) -> bool { return std::get<0>(x) % limit; };
             funcReverse = [limit](const auto& x) -> bool { return !(x.first % limit); };
@@ -194,7 +190,7 @@ TEMPLATE_PRODUCT_TEST_CASE("cefal::filter()", "", (std::map, std::unordered_map)
             for (int j = 0; j < ContainerSize_V<TestType>; ++j) {
                 src = std::move(src)
                       | ops::append(helpers::SingletonFrom<TestType>{
-                          DerefedInnerType(seed.time_since_epoch().count() + j, seed.time_since_epoch().count() + j + 1)});
+                          InnerType(seed.time_since_epoch().count() + j, seed.time_since_epoch().count() + j + 1)});
             }
             meter.measure([&src, &func] {
                 TestType dest = src | ops::filter(func);
@@ -209,7 +205,7 @@ TEMPLATE_PRODUCT_TEST_CASE("cefal::filter()", "", (std::map, std::unordered_map)
             for (int j = 0; j < ContainerSize_V<TestType>; ++j) {
                 src = std::move(src)
                       | ops::append(helpers::SingletonFrom<TestType>{
-                          DerefedInnerType(seed.time_since_epoch().count() + j, seed.time_since_epoch().count() + j + 1)});
+                          InnerType(seed.time_since_epoch().count() + j, seed.time_since_epoch().count() + j + 1)});
             }
             meter.measure([&src, &funcReverse] {
                 auto dest = src;
@@ -226,7 +222,7 @@ TEMPLATE_PRODUCT_TEST_CASE("cefal::filter()", "", (std::map, std::unordered_map)
                 for (int j = 0; j < ContainerSize_V<TestType>; ++j) {
                     x = std::move(x)
                         | ops::append(helpers::SingletonFrom<TestType>{
-                            DerefedInnerType(seed.time_since_epoch().count() + j, seed.time_since_epoch().count() + j + 1)});
+                            InnerType(seed.time_since_epoch().count() + j, seed.time_since_epoch().count() + j + 1)});
                 }
             }
             meter.measure([&src, &func](int i) {
@@ -243,7 +239,7 @@ TEMPLATE_PRODUCT_TEST_CASE("cefal::filter()", "", (std::map, std::unordered_map)
                 for (int j = 0; j < ContainerSize_V<TestType>; ++j) {
                     x = std::move(x)
                         | ops::append(helpers::SingletonFrom<TestType>{
-                            DerefedInnerType(seed.time_since_epoch().count() + j, seed.time_since_epoch().count() + j + 1)});
+                            InnerType(seed.time_since_epoch().count() + j, seed.time_since_epoch().count() + j + 1)});
                 }
             }
             meter.measure([&src, &funcReverse](int i) {

@@ -52,13 +52,12 @@ concept HasFunctorMethods = requires(T x, InnerT value, std::function<InnerT(Inn
 
 namespace concepts {
 // clang-format off
-template <typename T, typename CleanT = std::remove_cvref_t<T>, typename InnerT = InnerType_T<CleanT>,
-          typename ConstInnerT = ConstInnerType_T<CleanT>>
+template <typename T, typename CleanT = std::remove_cvref_t<T>, typename InnerT = InnerType_T<CleanT>>
 concept Functor =
-requires(CleanT x, InnerT value, std::function<InnerT(InnerT)> converter, std::function<InnerT(ConstInnerT)> constConverter) {
+requires(CleanT x, InnerT value, std::function<InnerT(InnerT)> converter) {
     { instances::Functor<CleanT>::unit(value) } -> cefal::detail::ValidInnerTypeTransformationFrom<CleanT>;
     { instances::Functor<CleanT>::unit(std::move(value)) } -> cefal::detail::ValidInnerTypeTransformationFrom<CleanT>;
-    { instances::Functor<CleanT>::map(x, std::move(constConverter)) } -> cefal::detail::ValidInnerTypeTransformationFrom<CleanT>;
+    { instances::Functor<CleanT>::map(x, std::move(converter)) } -> cefal::detail::ValidInnerTypeTransformationFrom<CleanT>;
     { instances::Functor<CleanT>::map(std::move(x), std::move(converter)) } -> cefal::detail::ValidInnerTypeTransformationFrom<CleanT>;
 };
 // clang-format on
