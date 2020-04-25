@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.13.0)
 
-project(cefal VERSION 0.1)
-set(CEFAL_BUILD_WITH_DUMMY 1)
+project(cefal VERSION 0.1.0)
 
 add_library(cefal INTERFACE)
 add_library(cefal::cefal ALIAS cefal)
@@ -11,7 +10,7 @@ target_include_directories(cefal INTERFACE
     $<INSTALL_INTERFACE:include>
 )
 
-if(CEFAL_BUILD_WITH_DUMMY)
+if(CEFAL_BUILD_DUMMY)
     message("-- cefal: Building with dummy unit")
     add_executable(cefal_dummy src/dummy.cpp)
     target_link_libraries(cefal_dummy PRIVATE cefal::cefal)
