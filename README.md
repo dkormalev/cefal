@@ -58,6 +58,14 @@ Has `filter` function. Also provides `innerFilter` function for Functor of Filte
  * `std_ranges` - std::ranges::views
  * `with_functions` - any type that has `filter` method
 
+### Converter
+Has `as` function. Allows to modify the shape.
+
+#### Instances
+ * `from_self` - Converter to same type. Doesn't do anything, just returns the same object.
+ * `from_std_containers` - from std::range (i.e. std::containers and range views) to std::containers
+ * `from_std_optional` - from std::optional to any functor+monoid
+
 ## Usage
 All typeclasses can be loaded with `cefal/cefal` header. No instances are loaded automatically, they need to be loaded on one-by-one basis (`cefal/everything.h` exists though with all the instances added, but is not recommended to use).
 
@@ -95,7 +103,6 @@ Container sizes are not the same for different containers (otherwise it would ei
  * std::unordered_set: 100k for int and 25k for Expensive
  * std::map: 100k for int and 25k for Expensive
  * std::unordered_map: 100k for int and 25k for Expensive
-
 
 Multi versions of sets are also benchmarked, but are similar to single-entry sets and are omitted in results below for brevity.
 
@@ -230,11 +237,12 @@ Cefal lacks laziness, but it can be achieved with `std::ranges` (cefal has parti
 
 ### Piped form
 ```cpp
-std::vector<std::vector<int>> result =
+std::list<std::vector<int>> result =
     cefal::unit<std::vector>(3) | cefal::ops::map          ([](int x) { return ops::unit<std::vector>(x); })
                                 | cefal::ops::innerFilter  ([](int x) { return x % 2; })
                                 | cefal::ops::innerFlatMap ([](int x) { return std::vector{x + 1, x + 2}; })
-                                | cefal::ops::innerMap     ([](int x) { return x * 3; });
+                                | cefal::ops::innerMap     ([](int x) { return x * 3; })
+                                | cefal::ops::as<std::list>();
 ```
 ```cpp
 auto rawToResult = cefal::ops::flatMap([](RawResult&& raw){ return maybeGetResult(std::move(raw)); };
@@ -250,6 +258,20 @@ auto result = mapper(cefal::unit<std::vector>(3));
 ```cpp
 auto left = cefal::unit<std::vector>(3);
 auto anotherResult = cefal::ops::map([](int x) { return x * 3; })(left);
+```
+
+### Ranges materialization
+```cpp
+std::map<int, std::string> source = /*...*/;
+
+std::unordered_map<int, std::string> mapResult =
+    source | std::views::filter([](const auto& x) {return x.first % 2; })
+           | cefal::ops::as<std::unordered_map>();
+
+std::vector<std::pair<std::string, std::string>> vectorResult =
+    source | std::views::transform([](const auto& x) {return std::make_pair(std::to_string(x.first), x.second); })
+           | cefal::ops::as<std::vector>();
+
 ```
 
 ### Custom class support
